@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp@latest"],
+      "env": {}
+    }
+  },
+  "_comment": "Example only. Merge into your Claude/Grok MCP config. Index MCP is lookup-only; requirements stay in docs/specs and HANDOFF."
+}
