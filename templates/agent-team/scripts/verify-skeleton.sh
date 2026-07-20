@@ -12,6 +12,8 @@ REQUIRED=(
   "CLAUDE.md"
   "AGENTS.md"
   "GROK.md"
+  "VERSION"
+  "CHANGELOG.md"
   "docs/agent-team/README.md"
   "docs/agent-team/WORKFLOW.md"
   "docs/agent-team/STATE.md"
@@ -29,6 +31,7 @@ REQUIRED=(
   "docs/reviews/code/.gitkeep"
   "scripts/invoke-grok.sh"
   "scripts/test-guards.sh"
+  "scripts/grok-wrapper.example.sh"
   ".mcp.json.example"
 )
 

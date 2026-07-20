@@ -2,6 +2,8 @@
 
 This file is the **shared map** for Claude and Grok. Both tools must respect it.
 
+Template version: see [`VERSION`](VERSION) · changelog: [`CHANGELOG.md`](CHANGELOG.md).
+
 ## Roles
 
 | Role | Who | Responsibility |

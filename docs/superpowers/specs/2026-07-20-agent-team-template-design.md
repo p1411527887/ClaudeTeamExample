@@ -148,9 +148,9 @@ Grok must not expand scope beyond handoff.
 - Run from project root.
 - Prompt Grok to read: `GROK.md` → `HANDOFF.md` → linked paths.
 - Prefer file links over inlining full specs (avoid CLI truncation).
-- Configurable via `GROK_CMD` (supports multi-word; wrapper script recommended for complex CLIs).
+- Configurable via `GROK_CMD` (supports multi-word; ship `scripts/grok-wrapper.example.sh` for complex CLIs).
 - **Hard preflight (enforced):** HANDOFF + STATE both `CODE`; matching non-null feature slug; matching iteration ≥ 1; no idle sentinel; `## Grok result` contains `pending`.
-- Packaging install: `scripts/install-agent-team.sh` (greenfield / brownfield / dry-run). Guard tests: `scripts/test-guards.sh`.
+- Packaging install: `scripts/install-agent-team.sh` (greenfield / brownfield / dry-run). Guard tests: `scripts/test-guards.sh`. CI runs skeleton + guards + greenfield install smoke.
 
 ## 6. Contract files
 
@@ -196,6 +196,15 @@ Grok must not expand scope beyond handoff.
 - Ship `.mcp.json.example` showing how to enable a Context7-style docs/code index MCP.
 - User merges into their real MCP config (Claude Code / Grok as applicable).
 - Document in `WORKFLOW.md`: index MCP ≠ authority for requirements.
+
+## 7b. Optional ECC (and similar harness packs)
+
+- **Agent-team pipeline remains primary** (STATE / HANDOFF / Grok coder).
+- Optional pack such as [affaan-m/ECC](https://github.com/affaan-m/ECC) may enhance Claude (skills, rules, review depth) only.
+- Ship `docs/agent-team/ECC-INTEGRATION.md` with authority order, light install, phase map, and conflict rules.
+- Orchestrator `CLAUDE.md` and shared `AGENTS.md` must restate authority order so ECC cannot invent requirements or replace `invoke-grok.sh` on CODE.
+- Grok ignores ECC unless a path is explicitly linked from HANDOFF.
+- Adoption ladder: baseline (no ECC) → light (plugin + common + one language rules) → medium (reviewers writing into `docs/reviews/**`).
 
 ## 8. Relationship to this repository
 

@@ -29,10 +29,36 @@ jobs:
           bash -n templates/agent-team/scripts/invoke-grok.sh
           bash -n templates/agent-team/scripts/verify-skeleton.sh
           bash -n templates/agent-team/scripts/test-guards.sh
+          bash -n templates/agent-team/scripts/grok-wrapper.example.sh
           bash -n scripts/install-agent-team.sh
 
-      - name: Install script dry-run (brownfield)
+      - name: Install dry-run (brownfield)
         run: |
           mkdir -p /tmp/sample-project
           echo "# project" > /tmp/sample-project/CLAUDE.md
+          echo "# old agents" > /tmp/sample-project/AGENTS.md
           ./scripts/install-agent-team.sh /tmp/sample-project --brownfield --dry-run
+
+      - name: Install greenfield end-to-end
+        run: |
+          rm -rf /tmp/agent-team-gf
+          ./scripts/install-agent-team.sh /tmp/agent-team-gf --greenfield
+          /tmp/agent-team-gf/scripts/verify-skeleton.sh
+          /tmp/agent-team-gf/scripts/test-guards.sh
+          test -f /tmp/agent-team-gf/docs/agent-team/ECC-INTEGRATION.md
+          test -f /tmp/agent-team-gf/scripts/grok-wrapper.example.sh
+          test -f /tmp/agent-team-gf/VERSION
+          # No broken relative install link that points outside the project
+          ! grep -qE '\]\(\.\./\.\./\.\./\.\./scripts/install-agent-team' /tmp/agent-team-gf/docs/agent-team/README.md
+
+      - name: Install brownfield end-to-end
+        run: |
+          rm -rf /tmp/agent-team-bf
+          mkdir -p /tmp/agent-team-bf
+          echo "# mine" > /tmp/agent-team-bf/CLAUDE.md
+          echo "# existing agents" > /tmp/agent-team-bf/AGENTS.md
+          ./scripts/install-agent-team.sh /tmp/agent-team-bf --brownfield
+          grep -q mine /tmp/agent-team-bf/CLAUDE.md
+          test -f /tmp/agent-team-bf/CLAUDE.agent-team.md
+          test -f /tmp/agent-team-bf/AGENTS.agent-team.md
+          /tmp/agent-team-bf/scripts/verify-skeleton.sh

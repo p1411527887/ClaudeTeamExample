@@ -105,6 +105,11 @@ copy_tree "${SRC}/docs/reviews/" "${DEST}/docs/reviews/"
 for f in AGENTS.md GROK.md .mcp.json.example; do
   if [[ -e "${DEST}/${f}" && "${DRY_RUN}" -eq 0 ]]; then
     echo "skip existing: ${DEST}/${f} (merge manually if needed)"
+    if [[ "${f}" == "AGENTS.md" ]]; then
+      echo "warn: existing AGENTS.md kept — merge role/SSOT tables from templates/agent-team/AGENTS.md by hand" >&2
+      cp "${SRC}/AGENTS.md" "${DEST}/AGENTS.agent-team.md"
+      echo "wrote: AGENTS.agent-team.md (sidecar for merge)"
+    fi
   elif [[ "${DRY_RUN}" -eq 1 ]]; then
     echo "dry-run: would copy ${f} (if missing)"
   elif [[ ! -e "${DEST}/${f}" ]]; then
@@ -113,13 +118,25 @@ for f in AGENTS.md GROK.md .mcp.json.example; do
   fi
 done
 
-for f in invoke-grok.sh verify-skeleton.sh test-guards.sh; do
+for f in invoke-grok.sh verify-skeleton.sh test-guards.sh grok-wrapper.example.sh; do
   if [[ "${DRY_RUN}" -eq 1 ]]; then
     echo "dry-run: would install scripts/${f}"
   else
     cp "${SRC}/scripts/${f}" "${DEST}/scripts/${f}"
-    chmod +x "${DEST}/scripts/${f}"
+    if [[ "${f}" == *.sh ]]; then
+      chmod +x "${DEST}/scripts/${f}" 2>/dev/null || true
+    fi
     echo "installed: scripts/${f}"
+  fi
+done
+
+# VERSION + CHANGELOG (always refresh on brownfield — non-destructive docs)
+for f in VERSION CHANGELOG.md; do
+  if [[ "${DRY_RUN}" -eq 1 ]]; then
+    echo "dry-run: would copy ${f}"
+  else
+    cp "${SRC}/${f}" "${DEST}/${f}"
+    echo "copied: ${f}"
   fi
 done
 

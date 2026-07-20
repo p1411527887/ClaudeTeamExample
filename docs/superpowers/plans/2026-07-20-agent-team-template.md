@@ -1,5 +1,8 @@
 # Agent Team Template Implementation Plan
 
+> **Status: IMPLEMENTED** (2026-07-20). Tasks 1–7 delivered on `master`; later polish (guards, install, ECC, VERSION) shipped as follow-ups.  
+> Historical plan — do not re-execute unless resurrecting a greenfield rewrite. Checkboxes below are archival.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Create a copy-paste skeleton at `templates/agent-team/` so new projects can run Claude (orchestrator) + Grok CLI (coder) with disk SSOT, HANDOFF, and light phase gates.

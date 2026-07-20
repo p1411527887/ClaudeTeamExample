@@ -77,6 +77,8 @@ Full policy: [ECC-INTEGRATION.md](./ECC-INTEGRATION.md).
 | `docs/agent-team/HANDOFF.md` | Active Grok task (anti-context-loss) |
 | `docs/agent-team/STATE.md` | Phase + gates (one feature at a time) |
 | `docs/agent-team/ECC-INTEGRATION.md` | Optional ECC (or similar) integration policy |
+| `VERSION` / `CHANGELOG.md` | Template release identity |
+| `scripts/grok-wrapper.example.sh` | Optional local Grok CLI adapter |
 | Context7 / index MCP | Code lookup only |
 
 ## Copy into a new project

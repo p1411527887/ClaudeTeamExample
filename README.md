@@ -4,9 +4,18 @@
 >
 > Follow me on X: [https://x.com/jiayuan_jy](https://x.com/jiayuan_jy)
 
-A single `CLAUDE.md` file to improve Claude Code behavior, derived from [Andrej Karpathy's observations](https://x.com/karpathy/status/2015883857489522876) on LLM coding pitfalls.
+## Project purpose (this repository)
+
+This packaging repo ships **two complementary deliverables**:
+
+1. **Karpathy guidelines** — root `CLAUDE.md`, Cursor rule, skill, and examples for better LLM coding behavior.
+2. **Agent-team template** (`templates/agent-team/`, v1.1+) — Claude orchestrates + Grok codes via disk SSOT (`HANDOFF` / `STATE`), with optional [ECC](https://github.com/affaan-m/ECC) as a secondary skill pack. Install: `./scripts/install-agent-team.sh`.
 
 English | [简体中文](./README.zh.md)
+
+---
+
+A single `CLAUDE.md` file to improve Claude Code behavior, derived from [Andrej Karpathy's observations](https://x.com/karpathy/status/2015883857489522876) on LLM coding pitfalls.
 
 ## The Problems
 

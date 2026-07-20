@@ -4,9 +4,18 @@
 >
 > 在 X 上关注我：[https://x.com/jiayuan_jy](https://x.com/jiayuan_jy)
 
-一个单一的 `CLAUDE.md` 文件，用于改善 Claude Code 的行为，源自 [Andrej Karpathy 的观察](https://x.com/karpathy/status/2015883857489522876) 关于 LLM 编码陷阱的总结。
+## 本仓库用途
+
+本 packaging 仓库包含 **两份交付物**：
+
+1. **Karpathy 指南** — 根目录 `CLAUDE.md`、Cursor rule、skill 与示例。  
+2. **Agent-team 模板**（`templates/agent-team/`，v1.1+）— Claude 编排 + Grok 写代码 + 磁盘 SSOT；可选 [ECC](https://github.com/affaan-m/ECC) 作增强。安装：`./scripts/install-agent-team.sh`。
 
 [English](./README.md) | 简体中文
+
+---
+
+一个单一的 `CLAUDE.md` 文件，用于改善 Claude Code 的行为，源自 [Andrej Karpathy 的观察](https://x.com/karpathy/status/2015883857489522876) 关于 LLM 编码陷阱的总结。
 
 ## 问题所在
 
