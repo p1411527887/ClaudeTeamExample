@@ -85,9 +85,8 @@ project-root/
 
 ```text
 DRAFT_SPEC → SPEC_REVIEW → PLAN → PLAN_REVIEW → CODE → CODE_REVIEW → DONE
-                              ↑                    │
-                              └──── CHANGES ───────┘
-                                     (spec/plan loops)
+     ↑              │           ↑           │
+     └─ CHANGES ────┘           └─ CHANGES ─┘
 
 CODE ←── CODE_REVIEW (open critical/high/medium findings)
 ```

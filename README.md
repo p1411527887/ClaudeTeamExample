@@ -171,14 +171,26 @@ The goal is reducing costly mistakes on non-trivial work, not slowing down simpl
 Copy-paste skeleton for multi-agent workflow (Claude orchestrates, Grok codes via CLI, disk SSOT + HANDOFF):
 
 - Skeleton: [`templates/agent-team/`](./templates/agent-team/)
-- How to copy: [`templates/agent-team/docs/agent-team/README.md`](./templates/agent-team/docs/agent-team/README.md)
+- How to copy (greenfield **and brownfield**): [`templates/agent-team/docs/agent-team/README.md`](./templates/agent-team/docs/agent-team/README.md)
 - Design: [`docs/superpowers/specs/2026-07-20-agent-team-template-design.md`](./docs/superpowers/specs/2026-07-20-agent-team-template-design.md)
 - Plan: [`docs/superpowers/plans/2026-07-20-agent-team-template.md`](./docs/superpowers/plans/2026-07-20-agent-team-template.md)
 
+**CLAUDE.md identity**
+
+| Location | Meaning |
+|----------|---------|
+| Root [`CLAUDE.md`](./CLAUDE.md) | Karpathy guidelines for *this packaging repo* |
+| [`templates/agent-team/CLAUDE.md`](./templates/agent-team/CLAUDE.md) | Consumer **orchestrator** contract (after copy into a project) |
+
+**Greenfield** (empty project):
+
 ```bash
+rsync -a --dry-run templates/agent-team/ /path/to/your-project/
 rsync -a templates/agent-team/ /path/to/your-project/
 ```
 
+**Brownfield** (existing repo): do **not** blind-rsync over `CLAUDE.md` / `docs/`. Use selective copy + merge steps in the template README.
+
 ## License
 
-MIT
+MIT — see [`LICENSE`](./LICENSE).

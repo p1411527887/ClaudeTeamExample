@@ -1,25 +1,11 @@
-# CLAUDE.md — Orchestrator
+# CLAUDE.md
 
-Behavioral guidelines to reduce common LLM coding mistakes, plus **agent-team orchestration**.
+> **Packaging-repo note:** This file is the Karpathy guidelines for *this* repository.  
+> Multi-agent **Claude + Grok** consumer contracts live under [`templates/agent-team/`](templates/agent-team/) (orchestrator `CLAUDE.md`, `AGENTS.md`, `GROK.md`, HANDOFF/STATE). Do not confuse the two.
+
+Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
 
 **Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
-
-## Agent-team orchestration
-
-You are the **orchestrator** for this project’s multi-agent workflow. Full rules: `docs/agent-team/WORKFLOW.md` and `AGENTS.md`.
-
-### Duties
-
-1. Use a strong subagent (Opus-class) to **write** specs and plans into `docs/specs/` and `docs/plans/` from templates under `docs/agent-team/templates/`.
-2. Use a review subagent (Sonnet-class) for **spec, plan, and code** reviews into `docs/reviews/**`.
-3. After every phase: write the artifact, update `docs/agent-team/STATE.md`, check gates before advancing.
-4. For coding: write `docs/agent-team/HANDOFF.md`, then run `scripts/invoke-grok.sh`. Do **not** implement large features yourself when Grok is the coder (tiny orchestrator fixes OK).
-5. Before every Grok call, complete the **Before every invoke-grok** checklist in `docs/agent-team/WORKFLOW.md` (STATE↔HANDOFF sync, clear previous `## Grok result` to pending, open findings only when iter > 1).
-6. Code-review loop: open critical/high/medium → rewrite HANDOFF with fix list only → Grok again. Stop at 5 iterations and escalate to human.
-
-### HANDOFF mandatory fields
-
-Goal, success criteria, links (spec/plan/review), scope, out-of-scope, open findings (if iter>1), verify commands.
 
 ## 1. Think Before Coding
 

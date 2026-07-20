@@ -44,4 +44,5 @@ true
 
 ## Grok result
 
-<!-- Grok fills after run -->
+pending
+<!-- Orchestrator: set to pending before each invoke; Grok replaces with pass/fail + commands -->
