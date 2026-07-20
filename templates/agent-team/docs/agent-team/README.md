@@ -1,86 +1,123 @@
 # Agent Team Template
 
-Copy these files into a **project root** so Claude (orchestrator) and Grok CLI (coder) share disk context.
+Disk-based multi-agent workflow: **Claude orchestrates**, **Grok codes** via CLI, shared SSOT (spec / plan / reviews / HANDOFF / STATE).
 
-> **Identity note (packaging repo vs consumer):**  
-> In the *packaging* repository, root `CLAUDE.md` is pure Karpathy guidelines for this docs project.  
-> **After copy**, consumer `CLAUDE.md` is the **orchestrator** contract from this template (Karpathy + agent-team duties).
+> **CLAUDE.md identity**  
+> - *Packaging repo* root `CLAUDE.md` = Karpathy-only (this docs project).  
+> - *After install into a consumer project*, `CLAUDE.md` = orchestrator contract from this template (Karpathy + agent-team duties).
 
-## Install — greenfield (empty / new project)
+---
+
+## Where am I?
+
+| You are… | How to install |
+|----------|----------------|
+| In the **packaging repo** (has `templates/agent-team/`) | Use [`scripts/install-agent-team.sh`](../../../../scripts/install-agent-team.sh) from repo root (recommended) **or** the rsync commands below |
+| Already **inside a consumer project** (this file is at `docs/agent-team/README.md`) | Skeleton is installed. Use [Daily loop](#daily-loop-short). Do **not** re-run packaging-only rsync paths. |
+
+Packaging-only paths look like `templates/agent-team/...` — they only work from the packaging repository root.
+
+---
+
+## Install from packaging repository (recommended)
+
+From the **packaging repo root**:
 
 ```bash
-# always dry-run first
-rsync -a --dry-run templates/agent-team/ /path/to/your-project/
+# auto-detect greenfield vs brownfield
+./scripts/install-agent-team.sh /path/to/your-project
 
-# copy contents into project root
-rsync -a templates/agent-team/ /path/to/your-project/
-# or: cp -R templates/agent-team/. /path/to/your-project/
+# force full copy (overwrites collisions — empty projects only)
+./scripts/install-agent-team.sh /path/to/your-project --greenfield
+
+# existing project: selective copy, never overwrites CLAUDE.md
+./scripts/install-agent-team.sh /path/to/your-project --brownfield
+
+# preview
+./scripts/install-agent-team.sh /path/to/your-project --brownfield --dry-run
 ```
 
-After copy you should have `CLAUDE.md`, `AGENTS.md`, `GROK.md`, `docs/`, `scripts/invoke-grok.sh`, and optionally `.mcp.json.example` + `scripts/verify-skeleton.sh` at the project root.
+Then:
 
-## Install — brownfield (existing project)
+```bash
+cd /path/to/your-project
+./scripts/verify-skeleton.sh
+./scripts/test-guards.sh
+```
 
-**Do not** blind `rsync` over a repo that already has `CLAUDE.md`, `docs/`, or `scripts/` — it can silently overwrite project rules.
+### Manual greenfield (packaging repo only)
 
-1. Dry-run and inspect collisions:
-   ```bash
-   rsync -a --dry-run templates/agent-team/ /path/to/your-project/
-   ```
-2. Prefer **selective copy**:
-   ```bash
-   mkdir -p /path/to/your-project/docs /path/to/your-project/scripts
-   rsync -a templates/agent-team/docs/agent-team/ /path/to/your-project/docs/agent-team/
-   rsync -a templates/agent-team/docs/specs/ /path/to/your-project/docs/specs/
-   rsync -a templates/agent-team/docs/plans/ /path/to/your-project/docs/plans/
-   rsync -a templates/agent-team/docs/reviews/ /path/to/your-project/docs/reviews/
-   cp templates/agent-team/AGENTS.md templates/agent-team/GROK.md /path/to/your-project/
-   cp templates/agent-team/scripts/invoke-grok.sh templates/agent-team/scripts/verify-skeleton.sh /path/to/your-project/scripts/
-   chmod +x /path/to/your-project/scripts/invoke-grok.sh /path/to/your-project/scripts/verify-skeleton.sh
-   # optional: cp templates/agent-team/.mcp.json.example /path/to/your-project/
-   ```
-3. **Merge `CLAUDE.md`** (do not replace without reading):
-   - Keep your existing project rules.
-   - Append the **Agent-team orchestration** section from `templates/agent-team/CLAUDE.md` (or copy that file to `CLAUDE.agent-team.md` and link it from your main instructions).
-4. If you already have `AGENTS.md`, merge the role/SSOT tables instead of overwriting.
+```bash
+rsync -a --dry-run templates/agent-team/ /path/to/your-project/
+rsync -a templates/agent-team/ /path/to/your-project/
+chmod +x /path/to/your-project/scripts/*.sh
+```
+
+### Manual brownfield (packaging repo only)
+
+**Do not** blind full-tree rsync over an existing `CLAUDE.md` / `docs/`.
+
+Prefer `./scripts/install-agent-team.sh DEST --brownfield`.  
+If you must copy by hand: rsync only `docs/agent-team/`, `docs/specs|plans|reviews/`, `AGENTS.md`, `GROK.md`, `scripts/*`; **merge** CLAUDE (or keep `CLAUDE.agent-team.md` sidecar from the installer).
+
+---
 
 ## Daily loop (short)
 
 1. Claude/Opus: write spec → Sonnet review  
 2. Claude/Opus: write plan → Sonnet review  
-3. Claude: fill `docs/agent-team/HANDOFF.md` + `STATE.md` (pre-invoke checklist in [WORKFLOW.md](./WORKFLOW.md))  
-4. Run `./scripts/invoke-grok.sh`  
-5. Claude/Sonnet: code review → if blocking findings, update HANDOFF and repeat from 4  
+3. Claude: fill `docs/agent-team/HANDOFF.md` + `STATE.md` using the [pre-invoke checklist](./WORKFLOW.md#before-every-scriptsinvoke-groksh-checklist)  
+4. `./scripts/invoke-grok.sh`  
+5. Claude/Sonnet: code review → blocking findings → fix-only HANDOFF → step 4  
 
 Details: [WORKFLOW.md](./WORKFLOW.md).  
-Worked sample (structure only): [examples/demo-feature/](./examples/demo-feature/).  
-Architecture summary is in WORKFLOW (no packaging-repo path required).
+Worked sample: [examples/demo-feature/](./examples/demo-feature/).
 
-## Grok CLI
+---
+
+## Grok CLI adapter
 
 ```bash
-# default (override if your binary differs)
+# default binary name
 export GROK_CMD="grok"
 
-# common adapter examples (pick what matches your install):
+# multi-word command (word-split intentional):
 # export GROK_CMD="grok --print"
 # export GROK_CMD="grok -p"
+
+# absolute path
 # export GROK_CMD="/usr/local/bin/grok"
+
+# wrapper script for complex CLIs (recommended if flags need files/cwd):
+# export GROK_CMD="$HOME/bin/grok-handoff-wrapper"
 
 ./scripts/invoke-grok.sh
 ./scripts/invoke-grok.sh "optional extra instruction"
 ```
 
-`invoke-grok.sh` **refuses** IDLE / null-slug / idle-sentinel handoffs. Fill a real HANDOFF first.
+### Preflight (enforced by `invoke-grok.sh`)
 
-If launch fails, fix `GROK_CMD` — that is a CLI adapter issue, not a broken workflow.
+Refuses launch unless:
+
+- HANDOFF `STATE phase` **and** STATE.md `phase` are both `CODE`
+- Feature slug + iteration match between STATE and HANDOFF
+- Iteration ≥ 1, slug not `null`
+- No idle sentinel text
+- `## Grok result` contains `pending` (clear stale pass/fail)
+
+If launch fails after preflight, fix `GROK_CMD` / CLI install — that is adapter config, not workflow design.
+
+---
 
 ## MCP (Context7-style)
 
-Merge the `mcpServers` entry from `.mcp.json.example` into your real MCP config (do not rename-and-run the example wholesale). Index MCP is for code/docs lookup only. See comments in the example file’s sibling note in WORKFLOW / this README.
+Merge the `mcpServers` entry from project-root `.mcp.json.example` into your real MCP config. Do not rename-and-run the example wholesale. Index MCP = lookup only; requirements stay in specs + HANDOFF.
 
-## Verify skeleton (after install)
+---
+
+## Verify & tests (after install)
 
 ```bash
-./scripts/verify-skeleton.sh   # if you copied it
+./scripts/verify-skeleton.sh   # required files + headings
+./scripts/test-guards.sh       # invoke-grok preflight unit tests
 ```

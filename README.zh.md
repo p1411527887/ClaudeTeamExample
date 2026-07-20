@@ -178,7 +178,9 @@ curl https://raw.githubusercontent.com/forrestchang/andrej-karpathy-skills/main/
 **注意：** 根目录 `CLAUDE.md` 是本仓库的 Karpathy 指南；复制后项目里的 `CLAUDE.md` 来自模板，含编排职责。已有项目请勿盲目 `rsync` 覆盖，见模板 README 的 brownfield 步骤。
 
 ```bash
-rsync -a --dry-run templates/agent-team/ /path/to/your-project/
+# 推荐：从本仓库根目录安装
+./scripts/install-agent-team.sh /path/to/your-project
+./scripts/install-agent-team.sh /path/to/your-project --brownfield  # 不覆盖已有 CLAUDE.md
 ```
 
 ## 许可

@@ -148,7 +148,9 @@ Grok must not expand scope beyond handoff.
 - Run from project root.
 - Prompt Grok to read: `GROK.md` → `HANDOFF.md` → linked paths.
 - Prefer file links over inlining full specs (avoid CLI truncation).
-- Script is a thin wrapper; exact Grok CLI flags may be documented as configurable env vars (e.g. `GROK_CMD`).
+- Configurable via `GROK_CMD` (supports multi-word; wrapper script recommended for complex CLIs).
+- **Hard preflight (enforced):** HANDOFF + STATE both `CODE`; matching non-null feature slug; matching iteration ≥ 1; no idle sentinel; `## Grok result` contains `pending`.
+- Packaging install: `scripts/install-agent-team.sh` (greenfield / brownfield / dry-run). Guard tests: `scripts/test-guards.sh`.
 
 ## 6. Contract files
 

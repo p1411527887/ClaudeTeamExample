@@ -1,0 +1,38 @@
+name: agent-team
+
+on:
+  push:
+    paths:
+      - "templates/agent-team/**"
+      - "scripts/install-agent-team.sh"
+      - ".github/workflows/agent-team-ci.yml"
+  pull_request:
+    paths:
+      - "templates/agent-team/**"
+      - "scripts/install-agent-team.sh"
+      - ".github/workflows/agent-team-ci.yml"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Skeleton completeness
+        run: ./templates/agent-team/scripts/verify-skeleton.sh
+
+      - name: Guard unit tests
+        run: ./templates/agent-team/scripts/test-guards.sh
+
+      - name: Bash syntax
+        run: |
+          bash -n templates/agent-team/scripts/invoke-grok.sh
+          bash -n templates/agent-team/scripts/verify-skeleton.sh
+          bash -n templates/agent-team/scripts/test-guards.sh
+          bash -n scripts/install-agent-team.sh
+
+      - name: Install script dry-run (brownfield)
+        run: |
+          mkdir -p /tmp/sample-project
+          echo "# project" > /tmp/sample-project/CLAUDE.md
+          ./scripts/install-agent-team.sh /tmp/sample-project --brownfield --dry-run

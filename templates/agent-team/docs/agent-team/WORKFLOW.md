@@ -48,7 +48,13 @@ Orchestrator must confirm:
 - [ ] If iteration > 1: open findings table lists only unresolved blocking items
 - [ ] Verify commands are real project commands (not bare `true` unless intentional smoke)
 
-`invoke-grok.sh` refuses IDLE / null slug / idle-sentinel HANDOFF; the rest is orchestrator discipline.
+`invoke-grok.sh` **enforces** (hard fail):
+
+- HANDOFF + STATE both `phase`/`STATE phase` = `CODE`
+- Feature slug + iteration match and are non-null / ≥ 1
+- No idle sentinel; `## Grok result` contains `pending`
+
+Remaining checklist items (verify commands quality, findings table content) are orchestrator discipline.
 
 ## Context7 / index MCP
 

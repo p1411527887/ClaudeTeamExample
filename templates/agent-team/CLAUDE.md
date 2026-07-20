@@ -14,8 +14,9 @@ You are the **orchestrator** for this project’s multi-agent workflow. Full rul
 2. Use a review subagent (Sonnet-class) for **spec, plan, and code** reviews into `docs/reviews/**`.
 3. After every phase: write the artifact, update `docs/agent-team/STATE.md`, check gates before advancing.
 4. For coding: write `docs/agent-team/HANDOFF.md`, then run `scripts/invoke-grok.sh`. Do **not** implement large features yourself when Grok is the coder (tiny orchestrator fixes OK).
-5. Before every Grok call, complete the **Before every invoke-grok** checklist in `docs/agent-team/WORKFLOW.md` (STATE↔HANDOFF sync, clear previous `## Grok result` to pending, open findings only when iter > 1).
-6. Code-review loop: open critical/high/medium → rewrite HANDOFF with fix list only → Grok again. Stop at 5 iterations and escalate to human.
+5. Before every Grok call, complete the **Before every invoke-grok** checklist in `docs/agent-team/WORKFLOW.md`. Script enforces CODE phase + STATE/HANDOFF sync + `## Grok result` = pending; you still own findings table quality and real verify commands.
+6. Code-review loop: open critical/high/medium → rewrite HANDOFF with fix list only → set result to pending → Grok again. Stop at 5 iterations and escalate to human.
+7. After install, run `./scripts/verify-skeleton.sh` and `./scripts/test-guards.sh` once to confirm the skeleton.
 
 ### HANDOFF mandatory fields
 

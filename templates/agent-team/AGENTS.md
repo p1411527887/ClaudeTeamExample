@@ -28,10 +28,20 @@ This file is the **shared map** for Claude and Grok. Both tools must respect it.
 
 `DRAFT_SPEC → SPEC_REVIEW → PLAN → PLAN_REVIEW → CODE → CODE_REVIEW → DONE`
 
-Full rules: [`docs/agent-team/WORKFLOW.md`](docs/agent-team/WORKFLOW.md).
+Full rules + **pre-invoke checklist**: [`docs/agent-team/WORKFLOW.md`](docs/agent-team/WORKFLOW.md).
+
+Worked file shapes (demo only): [`docs/agent-team/examples/demo-feature/`](docs/agent-team/examples/demo-feature/).
 
 ## Behavioral principles
 
 Follow Karpathy-style guidelines in [`CLAUDE.md`](CLAUDE.md): Think Before Coding, Simplicity First, Surgical Changes, Goal-Driven Execution.
 
 Grok: also read [`GROK.md`](GROK.md) before every coding turn.
+
+## Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/invoke-grok.sh` | Launch Grok after CODE-phase + STATE sync guards |
+| `scripts/verify-skeleton.sh` | Completeness check after install |
+| `scripts/test-guards.sh` | Unit tests for invoke preflight |

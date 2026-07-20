@@ -182,14 +182,20 @@ Copy-paste skeleton for multi-agent workflow (Claude orchestrates, Grok codes vi
 | Root [`CLAUDE.md`](./CLAUDE.md) | Karpathy guidelines for *this packaging repo* |
 | [`templates/agent-team/CLAUDE.md`](./templates/agent-team/CLAUDE.md) | Consumer **orchestrator** contract (after copy into a project) |
 
-**Greenfield** (empty project):
+**Install (from this packaging repo):**
 
 ```bash
-rsync -a --dry-run templates/agent-team/ /path/to/your-project/
-rsync -a templates/agent-team/ /path/to/your-project/
+# recommended — auto greenfield/brownfield
+./scripts/install-agent-team.sh /path/to/your-project
+
+./scripts/install-agent-team.sh /path/to/your-project --greenfield
+./scripts/install-agent-team.sh /path/to/your-project --brownfield   # never overwrites CLAUDE.md
+./scripts/install-agent-team.sh /path/to/your-project --dry-run
 ```
 
-**Brownfield** (existing repo): do **not** blind-rsync over `CLAUDE.md` / `docs/`. Use selective copy + merge steps in the template README.
+After install: `cd /path/to/your-project && ./scripts/verify-skeleton.sh && ./scripts/test-guards.sh`
+
+CI: [`.github/workflows/agent-team-ci.yml`](./.github/workflows/agent-team-ci.yml) runs skeleton + guard tests on template changes.
 
 ## License
 

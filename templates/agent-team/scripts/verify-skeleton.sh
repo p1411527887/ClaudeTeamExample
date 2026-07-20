@@ -21,11 +21,13 @@ REQUIRED=(
   "docs/agent-team/templates/SPEC_REVIEW.template.md"
   "docs/agent-team/templates/CODE_REVIEW.template.md"
   "docs/agent-team/templates/HANDOFF.template.md"
+  "docs/agent-team/examples/demo-feature/README.md"
   "docs/specs/.gitkeep"
   "docs/plans/.gitkeep"
   "docs/reviews/spec/.gitkeep"
   "docs/reviews/code/.gitkeep"
   "scripts/invoke-grok.sh"
+  "scripts/test-guards.sh"
   ".mcp.json.example"
 )
 
@@ -42,10 +44,27 @@ if [[ "${missing}" -ne 0 ]]; then
   exit 1
 fi
 
-if [[ ! -x "scripts/invoke-grok.sh" ]]; then
-  echo "MISSING executable bit: scripts/invoke-grok.sh"
+for exe in scripts/invoke-grok.sh scripts/test-guards.sh scripts/verify-skeleton.sh; do
+  if [[ ! -x "${exe}" ]]; then
+    echo "MISSING executable bit: ${exe}"
+    missing=1
+  fi
+done
+
+if [[ "${missing}" -ne 0 ]]; then
   echo "verify-skeleton: FAIL"
   exit 1
 fi
 
-echo "verify-skeleton: OK (${#REQUIRED[@]} paths + invoke-grok executable)"
+# Required headings in idle HANDOFF + template
+for h in "## Goal" "## Success criteria" "## Links" "## In scope" "## Out of scope" "## Verify commands" "## Grok result"; do
+  grep -qF "$h" docs/agent-team/HANDOFF.md || { echo "MISSING heading in HANDOFF.md: $h"; missing=1; }
+  grep -qF "$h" docs/agent-team/templates/HANDOFF.template.md || { echo "MISSING heading in HANDOFF.template.md: $h"; missing=1; }
+done
+
+if [[ "${missing}" -ne 0 ]]; then
+  echo "verify-skeleton: FAIL"
+  exit 1
+fi
+
+echo "verify-skeleton: OK (${#REQUIRED[@]} paths + executables + HANDOFF headings)"
