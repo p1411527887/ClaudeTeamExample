@@ -23,7 +23,7 @@ When anything conflicts, obey this order:
 | Role | Who | ECC may help? |
 |------|-----|----------------|
 | Orchestrator | Claude main session | Yes — use skills; still own STATE/HANDOFF |
-| Spec / plan author | Opus-class subagent | Yes — research / structure; still write `docs/specs`, `docs/plans` |
+| Spec / plan author | By size (WORKFLOW Model routing): full → Opus; small → Sonnet default + escalate | Yes — research / structure; still write `docs/specs`, `docs/plans` |
 | Reviewer | Sonnet-class (or ECC reviewer agents) | Yes — **must** write `docs/reviews/**` |
 | Coder | Grok CLI via `scripts/invoke-grok.sh` | **No** — ECC does not replace Grok for feature CODE |
 

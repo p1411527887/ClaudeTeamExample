@@ -139,6 +139,27 @@ Claude ghi `size:` vào `STATE.md`.
 
 **Upgrade size** nếu việc hóa ra lớn hơn (micro → small/full). Không được dùng micro để lách feature thật.
 
+### 4.1 Chọn model Claude (Opus vs Sonnet)
+
+Chi tiết: [WORKFLOW.md → Model routing](./WORKFLOW.md#model-routing-opus-vs-sonnet).
+
+| Size | Ai **viết** spec/plan | Ai **review** |
+|------|------------------------|---------------|
+| **micro** | Không viết (chỉ HANDOFF) | Sonnet (code review tuỳ) |
+| **small** | **Sonnet** mặc định; lên **Opus** nếu mơ hồ / auth·pay·schema·API / nhiều module / review structural fail ≥2 / bạn bảo dùng Opus | **Sonnet** |
+| **full** | **Opus** bắt buộc | **Sonnet** |
+
+Câu gợi ý:
+
+```text
+size: small — dùng Sonnet cho spec
+size: full — Opus viết spec + plan, Sonnet review
+size: small — escalate Opus cho spec (đụng auth)
+```
+
+**Không** tiết kiệm bằng cách để Sonnet sole-author trên **full**.  
+Artifact phải ghi `Author: Opus (spec)` hoặc `Author: Sonnet (spec)` (tương tự plan).
+
 ---
 
 ## 5. Flow chi tiết theo size

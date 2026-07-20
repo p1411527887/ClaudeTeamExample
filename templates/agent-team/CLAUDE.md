@@ -12,7 +12,7 @@ You are the **orchestrator** for this project’s multi-agent workflow. Full rul
 
 0. **Sizing first.** Set `STATE.size` = `micro` | `small` | `full` (default **`small`**). See `WORKFLOW.md`.
 1. **Claude = spec / plan / review / orchestrate only.** Do **not** implement product feature code at any size — **Grok always codes** via `HANDOFF` + `invoke-grok.sh`.
-2. Write specs/plans (Opus-class) when size requires; reviews (Sonnet-class) when size requires; **always** prefer a code review after Grok (light on micro).
+2. Write specs/plans when size requires; review with Sonnet-class; **always** prefer a code review after Grok (light on micro). **Pick author model by size** (see Model routing below + `WORKFLOW.md`).
 3. After every phase: artifact + update `STATE.md` + gates.
 4. For **all** coding: write `HANDOFF.md` → `./scripts/invoke-grok.sh` when gates allow (including **micro**).
 5. Pre-invoke checklist in `WORKFLOW.md`.
@@ -30,6 +30,20 @@ You are the **orchestrator** for this project’s multi-agent workflow. Full rul
 **Hard rule:** You (Claude) do **not** ship product diffs yourself. Tiny orchestrator-only doc edits OK; feature/bugfix code → Grok.
 
 Do **not** use **micro** to skip HANDOFF on multi-file/behavior changes — upgrade to small/full.
+
+### Model routing (Opus vs Sonnet)
+
+Full rules: `docs/agent-team/WORKFLOW.md` → **Model routing**.
+
+| Size | Spec / plan **author** | Spec / plan / code **reviewer** |
+|------|------------------------|----------------------------------|
+| **micro** | n/a | Sonnet (code review optional) |
+| **small** | **Sonnet** default; escalate to **Opus** if ambiguous / auth·pay·schema·API / multi-module / structural review fails ≥2 / human asks | **Sonnet** |
+| **full** | **Opus** required | **Sonnet** |
+
+- Always write `Author: Opus|Sonnet (spec|plan)` on the artifact.
+- Do **not** use Sonnet as sole author on **`full`**.
+- Reviews stay Sonnet unless human forces Opus or loops stuck ≥3 (one Opus review pass OK).
 
 ### Claude review-until-clean (spec & plan when required)
 

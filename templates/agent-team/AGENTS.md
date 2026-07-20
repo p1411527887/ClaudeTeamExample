@@ -10,7 +10,7 @@ Template version: see [`VERSION`](VERSION) · changelog: [`CHANGELOG.md`](CHANGE
 |------|-----|----------------|
 | Human approver | You (project owner) | Approve spec, plan, and code-fix lists before Grok runs those steps |
 | Orchestrator | Claude main session | Advance phases, **stop at WAIT_HUMAN_***, write STATE/HANDOFF, call Grok when gates allow — **does not implement product code** |
-| Spec / Plan author | Claude subagent (Opus-class) | Write `docs/specs/*` and `docs/plans/*` (when size requires) |
+| Spec / Plan author | Claude subagent — model by size | Write `docs/specs/*` and `docs/plans/*` (when size requires). **full → Opus**; **small → Sonnet default**, escalate to Opus when needed (see WORKFLOW) |
 | Reviewer | Claude subagent (Sonnet-class) | Spec/plan/code reviews; loops until clean where required |
 | Coder | Grok CLI | **All** product implement/fix via `HANDOFF` — including **micro** |
 
@@ -55,8 +55,18 @@ Grok does **not** treat Superpowers/ECC as requirements — only HANDOFF + linke
 
 Claude **never** product-codes; Grok always does (every size).
 
-Set `STATE.size` first. Details: [`docs/agent-team/WORKFLOW.md`](docs/agent-team/WORKFLOW.md) (sizing section).  
+Set `STATE.size` first. Details: [`docs/agent-team/WORKFLOW.md`](docs/agent-team/WORKFLOW.md) (sizing + **Model routing**).  
 **User guide (Vietnamese):** [`docs/agent-team/USAGE.md`](docs/agent-team/USAGE.md).
+
+### Model routing (summary)
+
+| Size | Author (spec/plan) | Reviewer |
+|------|--------------------|----------|
+| `micro` | n/a | Sonnet |
+| `small` | Sonnet default → Opus on escalate | Sonnet |
+| `full` | Opus required | Sonnet |
+
+Escalate **small** when auth/pay/schema/public API, multi-module, still ambiguous, or structural review fails ≥2.
 
 ## Phases (summary) — **full** size
 

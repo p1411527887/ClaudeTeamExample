@@ -3,7 +3,7 @@
 - **Date:** YYYY-MM-DD
 - **Slug:** <slug>
 - **Spec:** docs/specs/YYYY-MM-DD-<slug>-spec.md
-- **Author:** Opus (plan)
+- **Author:** Opus | Sonnet (plan)   # full → Opus; small → match routing (see WORKFLOW)
 - **Status:** draft | approved
 
 ## File touch list

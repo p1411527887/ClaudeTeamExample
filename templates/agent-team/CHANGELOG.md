@@ -1,5 +1,11 @@
 # Agent Team Template Changelog
 
+## 1.3.3 — 2026-07-20
+
+- **Model routing (Opus vs Sonnet):** size-based author/reviewer rules in WORKFLOW, CLAUDE, AGENTS, USAGE.
+  - **full** author = Opus required; **small** author = Sonnet default with escalate triggers; reviews = Sonnet.
+  - Artifact templates record `Author: Opus | Sonnet`.
+
 ## 1.3.2 — 2026-07-20
 
 - **Grok always codes** (including **micro**); Claude = spec/plan/review/orchestrate only.

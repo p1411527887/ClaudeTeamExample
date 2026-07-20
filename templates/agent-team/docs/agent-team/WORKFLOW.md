@@ -27,6 +27,48 @@ Set `size` in `docs/agent-team/STATE.md` at the start of work (human says `micro
 
 ---
 
+## Model routing (Opus vs Sonnet)
+
+Use **model class**, not a single API SKU string. Map in your Claude client as:
+
+| Class | Intent |
+|-------|--------|
+| **Opus-class** | Strongest available Claude for authoring (e.g. Opus) |
+| **Sonnet-class** | Fast/cheap Claude for review + light authoring (e.g. Sonnet) |
+
+### Who uses which model
+
+| Artifact / role | **micro** | **small** | **full** |
+|-----------------|-----------|-----------|----------|
+| Spec author (`DRAFT_SPEC`) | n/a | **Sonnet** default; **Opus** if escalate | **Opus** required |
+| Plan author (`PLAN`) | n/a | Same as that feature’s spec author (or **Sonnet** if reusing an Opus-approved spec that is already very detailed) | **Opus** required |
+| Spec / plan / code reviewer | **Sonnet** (code review optional) | **Sonnet** | **Sonnet** |
+| Orchestrator (STATE / HANDOFF / gates) | Any | Any | Any |
+
+**Hard rules**
+
+1. **Reviews are Sonnet** unless the human explicitly asks for Opus on a review, or author↔review is still structurally broken after **3** loops (then one Opus review pass is allowed).
+2. **`full` never uses Sonnet as sole spec/plan author** — leverage is highest here; do not “save” model cost on requirements.
+3. **Record class on the artifact** — `Author: Opus (spec)` or `Author: Sonnet (spec)` (same for plan). Reviewer line stays `Sonnet` by default.
+4. Human override always wins: e.g. `use Opus for spec` / `Sonnet is fine`.
+
+### Escalate **small** author to Opus when any of these is true
+
+- Product or API meaning still ambiguous after a short clarify
+- Touches **auth**, **payments**, **concurrency**, **schema/migration**, or **public API**
+- Multi-module / multi-service or unclear file blast radius
+- Spec/plan review returned `CHANGES_REQUESTED` for **structural** issues (missing requirements, wrong approach) **≥ 2** times
+- Human says high-stakes or “use Opus”
+
+If escalate mid-feature: rewrite or heavily revise the artifact with Opus, then **restart** the Claude review loop (do not skip `SPEC_REVIEW` / `PLAN_REVIEW`).
+
+### Budget tip (optional)
+
+Prefer cutting cost on **review loops** and **micro**, not on **`full` authoring**.  
+If budget is tight on **small**: keep **Opus for the first solid spec** when escalate triggers fire; keep **Sonnet for all reviews**.
+
+---
+
 ## Pipeline — **full** size (Claude review until clean + human gates)
 
 **Mandatory for `size: full`:** Spec and plan must pass a **Claude AI review loop until no blocking bugs** before the human is asked to approve, and before any later phase.
@@ -73,8 +115,8 @@ Open findings with severity **`critical` | `high` | `medium`** block advancement
    - **micro:** set pre-code gates to `n/a`, write thin HANDOFF, jump to **CODE** (step 7).  
    - **small/full:** continue from DRAFT_SPEC.
 
-1. **DRAFT_SPEC** — Opus writes `docs/specs/YYYY-MM-DD-<slug>-spec.md` from `docs/agent-team/templates/SPEC.template.md` (keep short on **small**).  
-   Set `gates.spec_review: pending`.
+1. **DRAFT_SPEC** — Author (model per **Model routing**) writes `docs/specs/YYYY-MM-DD-<slug>-spec.md` from `docs/agent-team/templates/SPEC.template.md` (keep short on **small**).  
+   Set `gates.spec_review: pending`. Note `Author: Opus|Sonnet (spec)` on the file.
 
 2. **SPEC_REVIEW (mandatory Claude)** — Sonnet-class writes `docs/reviews/spec/YYYY-MM-DD-<slug>.md` from the review template.  
    - Verdict **`CHANGES_REQUESTED`** or any **open** critical/high/medium → back to **DRAFT_SPEC** (author fixes), re-review. **Loop until clean.**  
@@ -88,9 +130,9 @@ Open findings with severity **`critical` | `high` | `medium`** block advancement
    - Human changes → back to DRAFT_SPEC (then full Claude review loop again).  
    - **No PLAN** until `human_spec: approved`.
 
-4. **PLAN** (**full** required; **small** optional) — Opus writes `docs/plans/YYYY-MM-DD-<slug>-plan.md` **only if** `human_spec` and `spec_review` are approved.  
+4. **PLAN** (**full** required; **small** optional) — Author (model per **Model routing**) writes `docs/plans/YYYY-MM-DD-<slug>-plan.md` **only if** `human_spec` and `spec_review` are approved.  
    - **small** without separate plan: set `plan: null` (or “embedded in spec”), `plan_review: n/a`, `human_plan: n/a`.  
-   - **full** or **small** with plan: Set `gates.plan_review: pending`.
+   - **full** or **small** with plan: Set `gates.plan_review: pending`. Note `Author: Opus|Sonnet (plan)` on the file.
 
 5. **PLAN_REVIEW** (**full** mandatory; **small** only if a plan file exists) — Sonnet-class writes `docs/reviews/spec/YYYY-MM-DD-<slug>-plan.md`.  
    - Same loop rules as SPEC_REVIEW until **APPROVED** + zero open blocking findings → `gates.plan_review: approved`.  

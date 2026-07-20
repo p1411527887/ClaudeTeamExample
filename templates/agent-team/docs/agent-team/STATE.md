@@ -48,6 +48,7 @@ blockers: []
 
 - Only **one** active feature at a time (v1).
 - **Grok is the only product coder** at every size; Claude orchestrates + reviews.
+- **Author model** (Opus vs Sonnet) follows size — see WORKFLOW **Model routing**; not stored in this YAML (recorded on the spec/plan file).
 - Spec/plan loops max **10**; code fix loops max **10**.
 - Before `invoke-grok.sh`: `size` set; `phase: CODE`; gates per size (WORKFLOW).
 - Prefer unquoted YAML. First key match wins.

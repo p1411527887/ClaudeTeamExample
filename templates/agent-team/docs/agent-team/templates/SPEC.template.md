@@ -2,7 +2,7 @@
 
 - **Date:** YYYY-MM-DD
 - **Slug:** <slug>
-- **Author:** Opus (spec)
+- **Author:** Opus | Sonnet (spec)   # full → Opus; small → Sonnet default (see WORKFLOW Model routing)
 - **Status:** draft | approved
 
 ## Problem
