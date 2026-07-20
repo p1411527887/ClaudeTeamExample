@@ -2,7 +2,7 @@
 
 ## Pipeline
 
-1. **DRAFT_SPEC** — Opus writes `docs/specs/YYYY-MM-DD-<slug>-spec.md` from `templates/SPEC.template.md`.
+1. **DRAFT_SPEC** — Opus writes `docs/specs/YYYY-MM-DD-<slug>-spec.md` from `docs/agent-team/templates/SPEC.template.md`.
 2. **SPEC_REVIEW** — Sonnet writes `docs/reviews/spec/YYYY-MM-DD-<slug>.md`.
    - Gate: `APPROVED` or `CHANGES_REQUESTED` (return to step 1).
 3. **PLAN** — Opus writes `docs/plans/YYYY-MM-DD-<slug>-plan.md` (only if spec approved).
