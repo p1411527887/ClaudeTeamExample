@@ -16,6 +16,7 @@ REQUIRED=(
   "docs/agent-team/WORKFLOW.md"
   "docs/agent-team/STATE.md"
   "docs/agent-team/HANDOFF.md"
+  "docs/agent-team/ECC-INTEGRATION.md"
   "docs/agent-team/templates/SPEC.template.md"
   "docs/agent-team/templates/PLAN.template.md"
   "docs/agent-team/templates/SPEC_REVIEW.template.md"

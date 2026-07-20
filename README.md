@@ -172,6 +172,7 @@ Copy-paste skeleton for multi-agent workflow (Claude orchestrates, Grok codes vi
 
 - Skeleton: [`templates/agent-team/`](./templates/agent-team/)
 - How to copy (greenfield **and brownfield**): [`templates/agent-team/docs/agent-team/README.md`](./templates/agent-team/docs/agent-team/README.md)
+- Optional ECC integration (this pipeline stays primary): [`templates/agent-team/docs/agent-team/ECC-INTEGRATION.md`](./templates/agent-team/docs/agent-team/ECC-INTEGRATION.md)
 - Design: [`docs/superpowers/specs/2026-07-20-agent-team-template-design.md`](./docs/superpowers/specs/2026-07-20-agent-team-template-design.md)
 - Plan: [`docs/superpowers/plans/2026-07-20-agent-team-template.md`](./docs/superpowers/plans/2026-07-20-agent-team-template.md)
 

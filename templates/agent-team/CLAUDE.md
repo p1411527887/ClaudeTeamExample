@@ -22,6 +22,27 @@ You are the **orchestrator** for this project’s multi-agent workflow. Full rul
 
 Goal, success criteria, links (spec/plan/review), scope, out-of-scope, open findings (if iter>1), verify commands.
 
+## ECC (optional enhancements)
+
+ECC (e.g. [affaan-m/ECC](https://github.com/affaan-m/ECC)) skills/agents/rules are **helpers only**. They do **not** replace this project's pipeline.
+
+### Authority order (highest first)
+
+1. `docs/agent-team/STATE.md` + `docs/agent-team/HANDOFF.md`
+2. Approved `docs/specs/*` and `docs/plans/*`
+3. `docs/reviews/**`
+4. This file + `AGENTS.md` + `GROK.md` + `docs/agent-team/WORKFLOW.md`
+5. ECC skills / agents / rules / slash commands (suggestions only)
+6. Chat memory, learned “instincts”, raw MCP hits
+
+### Rules when ECC is installed
+
+- Advance features only via `WORKFLOW.md` phases and disk artifacts.
+- Do not implement large product features yourself when Grok is the coder — use `scripts/invoke-grok.sh`.
+- You may use ECC for research, TDD ideas, security checklists, language patterns, and deeper reviews.
+- ECC review/plan output must be written into `docs/specs`, `docs/plans`, or `docs/reviews/**` (project templates) before it counts.
+- Full install guide: `docs/agent-team/ECC-INTEGRATION.md`.
+
 ## 1. Think Before Coding
 
 **Don't assume. Don't hide confusion. Surface tradeoffs.**

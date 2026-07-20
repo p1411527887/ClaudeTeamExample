@@ -172,6 +172,7 @@ curl https://raw.githubusercontent.com/forrestchang/andrej-karpathy-skills/main/
 
 - 骨架：[`templates/agent-team/`](./templates/agent-team/)
 - 安装说明（新项目 / 已有项目）：[`templates/agent-team/docs/agent-team/README.md`](./templates/agent-team/docs/agent-team/README.md)
+- 可选 ECC 集成（本 pipeline 仍为主）：[`templates/agent-team/docs/agent-team/ECC-INTEGRATION.md`](./templates/agent-team/docs/agent-team/ECC-INTEGRATION.md)
 - 设计文档：[`docs/superpowers/specs/2026-07-20-agent-team-template-design.md`](./docs/superpowers/specs/2026-07-20-agent-team-template-design.md)
 - 实现计划：[`docs/superpowers/plans/2026-07-20-agent-team-template.md`](./docs/superpowers/plans/2026-07-20-agent-team-template.md)
 

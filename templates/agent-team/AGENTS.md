@@ -24,6 +24,18 @@ This file is the **shared map** for Claude and Grok. Both tools must respect it.
 
 **Never** store sole requirements in chat memory or MCP memory alone.
 
+## Authority order (when tools disagree)
+
+1. `STATE.md` + `HANDOFF.md`
+2. Approved specs / plans
+3. Reviews under `docs/reviews/**`
+4. `CLAUDE.md` + `AGENTS.md` + `GROK.md` + `WORKFLOW.md`
+5. Optional packs (e.g. ECC skills/rules) — suggestions only
+6. Chat / instincts / MCP hits
+
+Optional ECC setup: [`docs/agent-team/ECC-INTEGRATION.md`](docs/agent-team/ECC-INTEGRATION.md).  
+Grok does **not** treat ECC as requirements — only HANDOFF + linked files.
+
 ## Phases (summary)
 
 `DRAFT_SPEC → SPEC_REVIEW → PLAN → PLAN_REVIEW → CODE → CODE_REVIEW → DONE`

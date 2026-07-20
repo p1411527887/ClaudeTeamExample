@@ -71,7 +71,8 @@ If you must copy by hand: rsync only `docs/agent-team/`, `docs/specs|plans|revie
 5. Claude/Sonnet: code review → blocking findings → fix-only HANDOFF → step 4  
 
 Details: [WORKFLOW.md](./WORKFLOW.md).  
-Worked sample: [examples/demo-feature/](./examples/demo-feature/).
+Worked sample: [examples/demo-feature/](./examples/demo-feature/).  
+Optional ECC (Claude skill pack) while keeping this pipeline primary: [ECC-INTEGRATION.md](./ECC-INTEGRATION.md).
 
 ---
 

@@ -60,6 +60,12 @@ Remaining checklist items (verify commands quality, findings table content) are 
 
 Use for understanding existing code. **Not** a source of product requirements. Requirements live in spec + handoff only.
 
+## Optional: ECC (and similar harness packs)
+
+This pipeline stays primary. ECC skills/agents may help Claude write better specs/reviews — they must not skip phases, replace Grok on CODE, or invent requirements outside disk artifacts.
+
+Full policy: [ECC-INTEGRATION.md](./ECC-INTEGRATION.md).
+
 ## Architecture (v1, consumer-facing)
 
 | Piece | Role |
@@ -70,6 +76,7 @@ Use for understanding existing code. **Not** a source of product requirements. R
 | `docs/specs`, `docs/plans`, `docs/reviews` | Durable artifacts |
 | `docs/agent-team/HANDOFF.md` | Active Grok task (anti-context-loss) |
 | `docs/agent-team/STATE.md` | Phase + gates (one feature at a time) |
+| `docs/agent-team/ECC-INTEGRATION.md` | Optional ECC (or similar) integration policy |
 | Context7 / index MCP | Code lookup only |
 
 ## Copy into a new project
