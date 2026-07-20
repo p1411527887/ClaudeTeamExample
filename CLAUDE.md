@@ -1,68 +1,73 @@
 # CLAUDE.md
 
-> **Packaging-repo note:** This file is the Karpathy guidelines for *this* repository.  
-> Multi-agent **Claude + Grok** consumer contracts live under [`templates/agent-team/`](templates/agent-team/) (orchestrator `CLAUDE.md`, `AGENTS.md`, `GROK.md`, HANDOFF/STATE). Do not confuse the two.
+> **Ghi chú repo packaging:** File này là hướng dẫn Karpathy cho *repository này*.  
+> Contract multi-agent **Claude + Grok** (sau khi cài vào app) nằm ở [`templates/agent-team/`](templates/agent-team/) (`CLAUDE.md` orchestrator, `AGENTS.md`, `GROK.md`, HANDOFF/STATE). Đừng nhầm hai lớp.
 
-Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
+Hướng dẫn hành vi để giảm lỗi code phổ biến của LLM. Gộp với rule riêng của project khi cần.
 
-**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
+**Tradeoff:** Thiên về cẩn thận hơn tốc độ. Task trivial → dùng phán đoán.
 
 ## 1. Think Before Coding
 
-**Don't assume. Don't hide confusion. Surface tradeoffs.**
+**Đừng đoán. Đừng giấu bối rối. Nêu tradeoff.**
 
-Before implementing:
-- State your assumptions explicitly. If uncertain, ask.
-- If multiple interpretations exist, present them - don't pick silently.
-- If a simpler approach exists, say so. Push back when warranted.
-- If something is unclear, stop. Name what's confusing. Ask.
+Trước khi implement:
+
+- Nêu giả định rõ. Không chắc thì hỏi.
+- Nhiều cách hiểu → trình bày, đừng chọn thầm.
+- Có cách đơn giản hơn → nói ra. Phản biện khi đáng.
+- Bối rối → dừng. Nêu chỗ chưa rõ. Hỏi.
 
 ## 2. Simplicity First
 
-**Minimum code that solves the problem. Nothing speculative.**
+**Code tối thiểu đủ việc. Không suy đoán thừa.**
 
-- No features beyond what was asked.
-- No abstractions for single-use code.
-- No "flexibility" or "configurability" that wasn't requested.
-- No error handling for impossible scenarios.
-- If you write 200 lines and it could be 50, rewrite it.
+- Không feature ngoài yêu cầu.
+- Không abstraction chỉ dùng một lần.
+- Không “linh hoạt / config” khi chưa được hỏi.
+- Không xử lý lỗi cho case không thể xảy ra.
+- 200 dòng mà 50 đủ → viết lại.
 
-Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+Tự hỏi: Senior có bảo overcomplicated không? Có → đơn giản hóa.
 
 ## 3. Surgical Changes
 
-**Touch only what you must. Clean up only your own mess.**
+**Chỉ đụng phần cần. Chỉ dọn rác do mình tạo.**
 
-When editing existing code:
-- Don't "improve" adjacent code, comments, or formatting.
-- Don't refactor things that aren't broken.
-- Match existing style, even if you'd do it differently.
-- If you notice unrelated dead code, mention it - don't delete it.
+Khi sửa code có sẵn:
 
-When your changes create orphans:
-- Remove imports/variables/functions that YOUR changes made unused.
-- Don't remove pre-existing dead code unless asked.
+- Đừng “cải thiện” code/comment/format bên cạnh.
+- Đừng refactor thứ không hỏng.
+- Bám style hiện có, dù bạn thích style khác.
+- Dead code không liên quan → nhắc, đừng xóa bừa.
 
-The test: Every changed line should trace directly to the user's request.
+Rác do thay đổi của bạn:
+
+- Xóa import/biến/hàm mà **thay đổi của bạn** làm thừa.
+- Đừng xóa dead code có từ trước trừ khi được yêu cầu.
+
+Thử: Mọi dòng đổi phải truy về đúng yêu cầu của user.
 
 ## 4. Goal-Driven Execution
 
-**Define success criteria. Loop until verified.**
+**Định nghĩa tiêu chí thành công. Lặp đến khi verify được.**
 
-Transform tasks into verifiable goals:
-- "Add validation" → "Write tests for invalid inputs, then make them pass"
-- "Fix the bug" → "Write a test that reproduces it, then make it pass"
-- "Refactor X" → "Ensure tests pass before and after"
+Biến task thành mục tiêu kiểm chứng được:
 
-For multi-step tasks, state a brief plan:
+- "Thêm validation" → "Viết test input invalid, rồi làm pass"
+- "Sửa bug" → "Viết test tái hiện, rồi làm pass"
+- "Refactor X" → "Đảm bảo test pass trước và sau"
+
+Multi-step, ghi plan ngắn:
+
 ```
-1. [Step] → verify: [check]
-2. [Step] → verify: [check]
-3. [Step] → verify: [check]
+1. [Bước] → verify: [kiểm tra]
+2. [Bước] → verify: [kiểm tra]
+3. [Bước] → verify: [kiểm tra]
 ```
 
-Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+Tiêu chí mạnh → loop độc lập. Tiêu chí yếu ("cho chạy") → phải hỏi liên tục.
 
 ---
 
-**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+**Dấu hiệu đang ổn:** ít diff thừa, ít viết lại vì overcomplicate, hỏi rõ trước khi code ẩu.

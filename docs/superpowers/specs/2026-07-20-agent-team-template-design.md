@@ -149,8 +149,8 @@ Grok must not expand scope beyond handoff.
 - Prompt Grok to read: `GROK.md` → `HANDOFF.md` → linked paths.
 - Prefer file links over inlining full specs (avoid CLI truncation).
 - Configurable via `GROK_CMD` (supports multi-word; ship `scripts/grok-wrapper.example.sh` for complex CLIs).
-- **Hard preflight (enforced):** HANDOFF + STATE both `CODE`; matching non-null feature slug; matching iteration ≥ 1; no idle sentinel; `## Grok result` contains `pending`.
-- Packaging install: `scripts/install-agent-team.sh` (greenfield / brownfield / dry-run). Guard tests: `scripts/test-guards.sh`. CI runs skeleton + guards + greenfield install smoke.
+- **Hard preflight (enforced):** HANDOFF + STATE both `CODE`; matching non-null feature slug; iteration ≥ 1 (int-normalized); `gates.spec_review` + `plan_review` approved (case-insensitive); exact idle Goal sentinel only; `## Grok result` body line-only `pending` (reject pass/fail).
+- Packaging install: `scripts/install-agent-team.sh` (auto empty→greenfield / else brownfield; greenfield refuses non-empty unless `--force`; brownfield preserves STATE/HANDOFF). Guard tests: `scripts/test-guards.sh`. CI runs skeleton + guards + install safety.
 
 ## 6. Contract files
 

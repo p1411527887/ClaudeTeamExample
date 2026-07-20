@@ -1,16 +1,16 @@
-# Examples
+# Ví dụ
 
-Real-world code examples demonstrating the four principles. Each example shows what LLMs commonly do wrong and how to fix it.
+Ví dụ code thực tế minh họa bốn nguyên tắc. Mỗi ví dụ: LLM hay làm sai thế nào và cách làm đúng.
 
 ---
 
-## 1. Think Before Coding
+## 1. Think Before Coding (Nghĩ trước khi code)
 
-### Example 1: Hidden Assumptions
+### Ví dụ 1: Giả định thầm
 
-**User Request:** "Add a feature to export user data"
+**Yêu cầu user:** "Add a feature to export user data"
 
-**❌ What LLMs Do (Wrong Assumptions)**
+**❌ LLM hay làm (giả định sai)**
 
 ```python
 def export_users(format='json'):
@@ -29,13 +29,13 @@ def export_users(format='json'):
     return f"Exported {len(users)} users"
 ```
 
-**Problems:**
-- Assumed it should export ALL users (what about pagination? privacy?)
-- Assumed file location without asking
-- Assumed which fields to include
-- Assumed CSV fieldnames without checking actual data structure
+**Vấn đề:**
+- Đoán mò it should export ALL users (what about pagination? privacy?)
+- Đoán mò file location mà không hỏi
+- Đoán mò which fields to include
+- Đoán mò CSV fieldnames mà không kiểm tra actual data structure
 
-**✅ What Should Happen (Surface Assumptions)**
+**✅ Nên làm (nêu giả định)**
 
 ```
 Before implementing, I need to clarify:
@@ -54,21 +54,21 @@ Would need more info for file-based exports.
 What's your preference?
 ```
 
-### Example 2: Multiple Interpretations
+### Ví dụ 2: Multiple Interpretations
 
-**User Request:** "Make the search faster"
+**Yêu cầu user:** "Make the search faster"
 
-**❌ What LLMs Do (Pick Silently)**
+**❌ LLM hay làm (Pick Silently)**
 
 ```python
 # Adds caching, database indexes, and async processing
-# without asking which "faster" matters
+# mà không hỏi which "faster" matters
 @lru_cache(maxsize=1000)
 async def search(query: str) -> List[Result]:
     # ... 200 lines of optimization code
 ```
 
-**✅ What Should Happen**
+**✅ Nên làm**
 
 ```
 "Make the search faster" could mean:
@@ -94,13 +94,13 @@ Which aspect matters most for your use case?
 
 ---
 
-## 2. Simplicity First
+## 2. Simplicity First (Đơn giản trước)
 
-### Example 1: Over-abstraction
+### Ví dụ 1: Over-abstraction
 
-**User Request:** "Add a function to calculate discount"
+**Yêu cầu user:** "Add a function to calculate discount"
 
-**❌ What LLMs Do (Overengineered)**
+**❌ LLM hay làm (Overengineered)**
 
 ```python
 from abc import ABC, abstractmethod
@@ -146,7 +146,7 @@ class DiscountCalculator:
 # Usage requires 30+ lines of setup for a simple calculation
 ```
 
-**✅ What Should Happen (Simple)**
+**✅ Nên làm (Simple)**
 
 ```python
 def calculate_discount(amount: float, percent: float) -> float:
@@ -159,11 +159,11 @@ discount = calculate_discount(100.0, 10.0)  # $10 off
 
 **When to add complexity:** Only when you actually need multiple discount types. If that requirement comes later, refactor then.
 
-### Example 2: Speculative Features
+### Ví dụ 2: Speculative Features
 
-**User Request:** "Save user preferences to database"
+**Yêu cầu user:** "Save user preferences to database"
 
-**❌ What LLMs Do (Unnecessary Features)**
+**❌ LLM hay làm (Unnecessary Features)**
 
 ```python
 class PreferenceManager:
@@ -207,7 +207,7 @@ class PreferenceManager:
         pass
 ```
 
-**✅ What Should Happen (Just What Was Asked)**
+**✅ Nên làm (Just What Was Asked)**
 
 ```python
 def save_preferences(db, user_id: int, preferences: dict):
@@ -222,13 +222,13 @@ def save_preferences(db, user_id: int, preferences: dict):
 
 ---
 
-## 3. Surgical Changes
+## 3. Surgical Changes (Sửa đúng phạm vi)
 
-### Example 1: Drive-by Refactoring
+### Ví dụ 1: Drive-by Refactoring
 
-**User Request:** "Fix the bug where empty emails crash the validator"
+**Yêu cầu user:** "Fix the bug where empty emails crash the validator"
 
-**❌ What LLMs Do (Too Much)**
+**❌ LLM hay làm (Too Much)**
 
 ```diff
   def validate_user(user_data):
@@ -260,13 +260,13 @@ def save_preferences(db, user_id: int, preferences: dict):
       return True
 ```
 
-**Problems:**
+**Vấn đề:**
 - "Improved" email validation beyond the bug fix
 - Added username validation nobody asked for
 - Changed comments
 - Added docstring
 
-**✅ What Should Happen (Surgical)**
+**✅ Nên làm (Surgical)**
 
 ```diff
   def validate_user(user_data):
@@ -290,11 +290,11 @@ def save_preferences(db, user_id: int, preferences: dict):
 
 **Only changed:** The specific lines that fix empty email handling.
 
-### Example 2: Style Drift
+### Ví dụ 2: Style Drift
 
-**User Request:** "Add logging to the upload function"
+**Yêu cầu user:** "Add logging to the upload function"
 
-**❌ What LLMs Do (Reformat Everything)**
+**❌ LLM hay làm (Reformat Everything)**
 
 ```diff
 - def upload_file(file_path, destination):
@@ -329,14 +329,14 @@ def save_preferences(db, user_id: int, preferences: dict):
           return False
 ```
 
-**Problems:**
+**Vấn đề:**
 - Changed quote style ('' to "")
 - Added type hints nobody asked for
 - Added docstring
 - Reformatted whitespace
 - Changed boolean return logic
 
-**✅ What Should Happen (Match Existing Style)**
+**✅ Nên làm (Match Existing Style)**
 
 ```diff
 + import logging
@@ -367,13 +367,13 @@ def save_preferences(db, user_id: int, preferences: dict):
 
 ---
 
-## 4. Goal-Driven Execution
+## 4. Goal-Driven Execution (Mục tiêu + verify)
 
-### Example 1: Vague vs. Verifiable
+### Ví dụ 1: Vague vs. Verifiable
 
-**User Request:** "Fix the authentication system"
+**Yêu cầu user:** "Fix the authentication system"
 
-**❌ What LLMs Do (Vague Approach)**
+**❌ LLM hay làm (Vague Approach)**
 
 ```
 I'll fix the authentication system by:
@@ -385,7 +385,7 @@ I'll fix the authentication system by:
 [Proceeds to make changes without clear success criteria]
 ```
 
-**✅ What Should Happen (Verifiable Goals)**
+**✅ Nên làm (Verifiable Goals)**
 
 ```
 To "fix authentication," I need to define success criteria. 
@@ -410,11 +410,11 @@ Current test coverage for auth: [shows coverage]
 What's the specific auth issue you're seeing?
 ```
 
-### Example 2: Multi-Step with Verification
+### Ví dụ 2: Multi-Step with Verification
 
-**User Request:** "Add rate limiting to the API"
+**Yêu cầu user:** "Add rate limiting to the API"
 
-**❌ What LLMs Do (All at Once)**
+**❌ LLM hay làm (All at Once)**
 
 ```python
 # Implements full rate limiting with Redis, multiple strategies,
@@ -422,7 +422,7 @@ What's the specific auth issue you're seeing?
 # No clear verification steps
 ```
 
-**✅ What Should Happen (Incremental with Verification)**
+**✅ Nên làm (Incremental with Verification)**
 
 ```
 Plan for rate limiting:
@@ -451,11 +451,11 @@ Each step is independently verifiable and deployable.
 Start with step 1?
 ```
 
-### Example 3: Test-First Verification
+### Ví dụ 3: Test-First Verification
 
-**User Request:** "The sorting breaks when there are duplicate scores"
+**Yêu cầu user:** "The sorting breaks when there are duplicate scores"
 
-**❌ What LLMs Do (Fix Without Reproducing)**
+**❌ LLM hay làm (Fix Without Reproducing)**
 
 ```python
 # Immediately changes sort logic without confirming the bug
@@ -463,7 +463,7 @@ def sort_scores(scores):
     return sorted(scores, key=lambda x: (-x['score'], x['name']))
 ```
 
-**✅ What Should Happen (Reproduce First)**
+**✅ Nên làm (Reproduce First)**
 
 ```python
 # 1. First, write a test that reproduces the issue

@@ -82,15 +82,24 @@ If setup is messy: remove plugin, run ECC uninstall/doctor from their repo, rein
 4. **Grok ignores ECC.** Coder reads `GROK.md` → `HANDOFF.md` → linked files only.
 5. **MCP budget:** keep connectors few; index MCP is lookup-only (see WORKFLOW).
 
-## Adoption ladder
+## Adoption ladder (aligned with Superpowers)
+
+Prefer this **global** order for optional packs:
 
 | Tier | What you enable |
 |------|-----------------|
-| **A — Baseline** | Agent-team only (this template). No ECC. |
-| **B — ECC light** | Plugin + `rules/common` + one language pack; few skills (e.g. search-first, tdd-workflow, security-review). |
-| **C — ECC medium** | + reviewer/security agents whose output lands in `docs/reviews/**`; hooks only if `minimal` and intentional. |
+| **A — Baseline** | Agent-team only (this template). No Superpowers, no ECC. |
+| **B — Superpowers light** | Process skills only — see [SUPERPOWERS-INTEGRATION.md](./SUPERPOWERS-INTEGRATION.md). CODE → Grok. |
+| **C — ECC light** | Plugin + `rules/common` + **one** language pack; few skills (e.g. search-first, security-review). **Only if** domain/security depth still missing after B. |
+| **D — ECC medium** | + reviewer/security agents whose output lands in `docs/reviews/**`; hooks only if `minimal` and intentional. |
 
-Stay on A until one feature completes cleanly through DONE. Then add B.
+Stay on A until one feature completes cleanly through DONE. Add B next. Add C only when needed — do **not** start at C/D.
+
+### Do not dual-default with Superpowers execute
+
+- Do **not** enable ECC multi-orch / full profile **and** Superpowers `executing-plans` (Claude-implements mode) as simultaneous defaults.
+- Both packs remain **suggestions** under contracts; disk + `WORKFLOW.md` win.
+- Product CODE stays `scripts/invoke-grok.sh`.
 
 ## Conflict resolution cheat sheet
 
@@ -101,10 +110,13 @@ Stay on A until one feature completes cleanly through DONE. Then add B.
 | ECC review finds bugs | Write CODE_REVIEW artifact → fix-only HANDOFF → Grok |
 | ECC instinct ≠ HANDOFF | HANDOFF wins |
 | `/ecc:plan` vs Opus plan | Merge into **one** `docs/plans/*` file; one source of truth |
+| ECC multi-orch + Superpowers execute both on | Turn one off; agent-team + Grok path wins |
+| Want ECC before Superpowers | Prefer Superpowers light (B) first unless you only need domain rules |
 
 ## References
 
 - Pipeline: [WORKFLOW.md](./WORKFLOW.md)
+- Superpowers (tier B): [SUPERPOWERS-INTEGRATION.md](./SUPERPOWERS-INTEGRATION.md)
 - Shared map: [AGENTS.md](../../AGENTS.md)
 - Orchestrator: [CLAUDE.md](../../CLAUDE.md)
 - Coder: [GROK.md](../../GROK.md)

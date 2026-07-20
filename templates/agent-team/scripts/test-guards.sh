@@ -83,6 +83,7 @@ EOF
 
 ```yaml
 feature: hello-export
+size: full
 phase: CODE
 iteration: 1
 spec: docs/specs/x.md
@@ -90,6 +91,9 @@ plan: docs/plans/x.md
 latest_code_review: null
 handoff: docs/agent-team/HANDOFF.md
 gates:
+  human_spec: approved
+  human_plan: approved
+  human_code_fix: n/a
   spec_review: approved
   plan_review: approved
   code_review: pending
@@ -121,7 +125,6 @@ expect_reject() {
 }
 
 expect_pass_preflight() {
-  # Guards pass → script reaches exec; with fake GROK_CMD that exits 0 we get 0.
   local name="$1"
   local dest="$2"
   local out rc
@@ -144,8 +147,6 @@ expect_pass_preflight() {
 echo "test-guards: running..."
 
 # --- idle starter (template default) ---
-# Idle HANDOFF includes both STATE phase IDLE and "No active handoff" sentinel;
-# either rejection is correct (sentinel is checked first).
 tmp="$(mktemp -d)"
 rsync -a "${TEMPLATE_ROOT}/" "${tmp}/"
 expect_reject "idle handoff" "${tmp}" "idle sentinel"
@@ -171,12 +172,23 @@ sed -i.bak 's/feature: hello-export/feature: other/' "${tmp}/docs/agent-team/STA
 expect_reject "feature mismatch" "${tmp}" "feature mismatch"
 sed -i.bak 's/feature: other/feature: hello-export/' "${tmp}/docs/agent-team/STATE.md"
 
-# --- iteration mismatch ---
+# --- iteration mismatch (raw strings differ but also after normalize) ---
 sed -i.bak 's/iteration: 1/iteration: 2/' "${tmp}/docs/agent-team/STATE.md"
 expect_reject "iteration mismatch" "${tmp}" "iteration mismatch"
 sed -i.bak 's/iteration: 2/iteration: 1/' "${tmp}/docs/agent-team/STATE.md"
 
-# --- stale Grok result ---
+# --- leading zeros: 01 vs 1 should match after normalize ---
+sed -i.bak 's/iteration: 1/iteration: 01/' "${tmp}/docs/agent-team/STATE.md"
+sed -i.bak 's/\*\*Iteration:\*\* 1/**Iteration:** 1/' "${tmp}/docs/agent-team/HANDOFF.md"
+expect_pass_preflight "iteration 01 vs 1 normalized" "${tmp}"
+sed -i.bak 's/iteration: 01/iteration: 1/' "${tmp}/docs/agent-team/STATE.md"
+
+# --- quoted YAML phase ---
+sed -i.bak 's/phase: CODE/phase: "CODE"/' "${tmp}/docs/agent-team/STATE.md"
+expect_pass_preflight "quoted phase CODE" "${tmp}"
+sed -i.bak 's/phase: "CODE"/phase: CODE/' "${tmp}/docs/agent-team/STATE.md"
+
+# --- stale Grok result without pending ---
 cat > "${tmp}/docs/agent-team/HANDOFF.md" <<'EOF'
 # HANDOFF
 
@@ -195,12 +207,106 @@ x
 EOF
 expect_reject "stale Grok result without pending" "${tmp}" "pending"
 
-# --- idle sentinel ---
+# --- stale pass that still mentions pending in prose (false-positive guard) ---
 make_valid_fixture "${tmp}"
-# inject sentinel into Goal
-perl -i -0pe 's/## Goal\n\n/## Goal\n\n_No active handoff. Orchestrator replaces this file before calling `scripts\/invoke-grok.sh`._\n\n/' "${tmp}/docs/agent-team/HANDOFF.md" 2>/dev/null || \
-  sed -i.bak 's/Implement greet for demo./No active handoff. Orchestrator replaces this file/' "${tmp}/docs/agent-team/HANDOFF.md"
-expect_reject "idle sentinel text" "${tmp}" "idle sentinel"
+cat > "${tmp}/docs/agent-team/HANDOFF.md" <<'EOF'
+# HANDOFF
+
+- **Feature slug:** hello-export
+- **Iteration:** 1
+- **STATE phase:** CODE
+
+## Goal
+
+x
+
+## Grok result
+
+- Status: pass
+- Notes: was pending earlier, now done
+EOF
+expect_reject "stale pass with pending in notes" "${tmp}" "completed"
+
+# --- free-text mention of idle phrase must NOT block ---
+make_valid_fixture "${tmp}"
+perl -i -0pe 's/## Goal\n\nImplement greet for demo./## Goal\n\nDocument what "No active handoff" means for operators./' \
+  "${tmp}/docs/agent-team/HANDOFF.md" 2>/dev/null || \
+  sed -i.bak 's/Implement greet for demo./Document No active handoff meaning/' "${tmp}/docs/agent-team/HANDOFF.md"
+expect_pass_preflight "No active handoff in free text OK" "${tmp}"
+
+# --- exact idle sentinel Goal line blocks ---
+make_valid_fixture "${tmp}"
+perl -i -0pe 's/## Goal\n\nImplement greet for demo./## Goal\n\n_No active handoff. Orchestrator replaces this file before calling `scripts\/invoke-grok.sh`._/' \
+  "${tmp}/docs/agent-team/HANDOFF.md"
+expect_reject "exact idle sentinel Goal" "${tmp}" "idle sentinel"
+
+# --- gates not approved ---
+make_valid_fixture "${tmp}"
+sed -i.bak 's/spec_review: approved/spec_review: pending/' "${tmp}/docs/agent-team/STATE.md"
+expect_reject "spec_review pending" "${tmp}" "spec_review"
+sed -i.bak 's/spec_review: pending/spec_review: approved/' "${tmp}/docs/agent-team/STATE.md"
+sed -i.bak 's/plan_review: approved/plan_review: changes_requested/' "${tmp}/docs/agent-team/STATE.md"
+expect_reject "plan_review changes_requested" "${tmp}" "plan_review"
+
+# --- APPROVED (review-verdict casing) accepted ---
+make_valid_fixture "${tmp}"
+sed -i.bak 's/spec_review: approved/spec_review: APPROVED/' "${tmp}/docs/agent-team/STATE.md"
+sed -i.bak 's/plan_review: approved/plan_review: APPROVED/' "${tmp}/docs/agent-team/STATE.md"
+expect_pass_preflight "gates APPROVED case-insensitive" "${tmp}"
+
+# --- bare pass line rejected ---
+make_valid_fixture "${tmp}"
+cat > "${tmp}/docs/agent-team/HANDOFF.md" <<'EOF'
+# HANDOFF
+
+- **Feature slug:** hello-export
+- **Iteration:** 1
+- **STATE phase:** CODE
+
+## Goal
+
+x
+
+## Grok result
+
+pass
+EOF
+expect_reject "bare pass Grok result" "${tmp}" "completed"
+
+# --- human_plan pending blocks first CODE (full) ---
+make_valid_fixture "${tmp}"
+sed -i.bak 's/human_plan: approved/human_plan: pending/' "${tmp}/docs/agent-team/STATE.md"
+expect_reject "human_plan pending" "${tmp}" "human_plan"
+
+# --- size micro allows invoke with all pre-code gates n/a ---
+make_valid_fixture "${tmp}"
+sed -i.bak 's/size: full/size: micro/' "${tmp}/docs/agent-team/STATE.md"
+sed -i.bak 's/human_spec: approved/human_spec: n\/a/' "${tmp}/docs/agent-team/STATE.md"
+sed -i.bak 's/human_plan: approved/human_plan: n\/a/' "${tmp}/docs/agent-team/STATE.md"
+sed -i.bak 's/spec_review: approved/spec_review: n\/a/' "${tmp}/docs/agent-team/STATE.md"
+sed -i.bak 's/plan_review: approved/plan_review: n\/a/' "${tmp}/docs/agent-team/STATE.md"
+expect_pass_preflight "size micro with n/a gates" "${tmp}"
+
+# --- size small allows plan gates n/a ---
+make_valid_fixture "${tmp}"
+sed -i.bak 's/size: full/size: small/' "${tmp}/docs/agent-team/STATE.md"
+sed -i.bak 's/human_plan: approved/human_plan: n\/a/' "${tmp}/docs/agent-team/STATE.md"
+sed -i.bak 's/plan_review: approved/plan_review: n\/a/' "${tmp}/docs/agent-team/STATE.md"
+expect_pass_preflight "size small plan n/a" "${tmp}"
+
+# --- size missing rejects ---
+make_valid_fixture "${tmp}"
+sed -i.bak 's/size: full/size: null/' "${tmp}/docs/agent-team/STATE.md"
+expect_reject "size null rejects" "${tmp}" "size"
+
+# --- iter 2 requires human_code_fix approved ---
+make_valid_fixture "${tmp}"
+sed -i.bak 's/iteration: 1/iteration: 2/' "${tmp}/docs/agent-team/STATE.md"
+sed -i.bak 's/\*\*Iteration:\*\* 1/**Iteration:** 2/' "${tmp}/docs/agent-team/HANDOFF.md"
+sed -i.bak 's/human_code_fix: n\/a/human_code_fix: pending/' "${tmp}/docs/agent-team/STATE.md"
+expect_reject "human_code_fix pending on iter 2" "${tmp}" "human_code_fix"
+sed -i.bak 's/human_code_fix: pending/human_code_fix: approved/' "${tmp}/docs/agent-team/STATE.md"
+expect_pass_preflight "human_code_fix approved on iter 2" "${tmp}"
 
 rm -rf "${tmp}"
 

@@ -1,26 +1,140 @@
 # Agent Team Workflow
 
-## Pipeline
+## Sizing (pick once per task)
 
-1. **DRAFT_SPEC** — Opus writes `docs/specs/YYYY-MM-DD-<slug>-spec.md` from `docs/agent-team/templates/SPEC.template.md`.
-2. **SPEC_REVIEW** — Sonnet writes `docs/reviews/spec/YYYY-MM-DD-<slug>.md`.
-   - Gate: `APPROVED` or `CHANGES_REQUESTED` (return to step 1).
-3. **PLAN** — Opus writes `docs/plans/YYYY-MM-DD-<slug>-plan.md` (only if spec approved).
-4. **PLAN_REVIEW** — Sonnet writes `docs/reviews/spec/YYYY-MM-DD-<slug>-plan.md`.
-   - Gate: same as spec review.
-   - **Note:** Plan reviews live under `docs/reviews/spec/` with a `-plan` suffix (no separate `docs/reviews/plan/` dir in v1).
-5. **CODE** — Orchestrator fills `HANDOFF.md`, updates `STATE.md`, runs `scripts/invoke-grok.sh`.
-6. **CODE_REVIEW** — Sonnet writes `docs/reviews/code/YYYY-MM-DD-<slug>-iter-N.md`.
-   - Open `critical` / `high` / `medium` → back to CODE with fix-only HANDOFF.
-   - `low` / `nit` → mark `deferred`; do not block DONE by default.
-   - If code reveals plan/spec problems, return to PLAN or DRAFT_SPEC (human or orchestrator decision), not only CODE.
-7. **DONE** — Set `STATE.md` phase to `DONE` when code_review gate is approved.
+Set `size` in `docs/agent-team/STATE.md` at the start of work (human says `micro` / `small` / `full`, or Claude proposes and human confirms).
 
-Each phase: **act → write artifact → update STATE → check gate**.
+| Size | When | Path |
+|------|------|------|
+| **micro** | Typo / 1–few lines; trivial | Thin **HANDOFF** → **Grok** (`invoke-grok`) → optional Claude code review. Spec/plan gates = `n/a`. **Claude does not implement.** |
+| **small** | Small feature/bug, few files, scope clear | Spec (short) → Claude review-until-clean → **WAIT_HUMAN_SPEC** → HANDOFF + **Grok** → CODE_REVIEW → (bugs → WAIT_HUMAN_CODE_FIX → Grok). Plan optional (`plan_review`/`human_plan` = `n/a`). |
+| **full** | Multi-module, schema/API/auth, high risk | Full pipeline below (spec ⟲ plan ⟲ human → **Grok** → code ⟲). |
 
-## Iteration limit
+**Role split (all sizes)**
 
-After **5** code-review fix loops without clearing blocking findings, set a human blocker in `STATE.md` and stop the auto loop.
+| Who | Does | Does **not** |
+|-----|------|----------------|
+| **Claude** | Spec, plan, reviews, STATE/HANDOFF, call `invoke-grok` | Implement product feature code (no bulk coding) |
+| **Grok** | All product CODE + fixes via HANDOFF | Invent requirements outside HANDOFF |
+
+**Defaults**
+
+- Human names size → use it.
+- Unclear → Claude proposes; default **`small`**.
+- Scope grows → upgrade size; never hide a real feature under micro without HANDOFF clarity.
+
+**Escalation:** micro → small/full if change touches behavior, public API, data, or multi-file design.
+
+---
+
+## Pipeline — **full** size (Claude review until clean + human gates)
+
+**Mandatory for `size: full`:** Spec and plan must pass a **Claude AI review loop until no blocking bugs** before the human is asked to approve, and before any later phase.
+
+```text
+DRAFT_SPEC → SPEC_REVIEW ⟲ (fix spec until Claude verdict APPROVED, zero open blocking findings)
+         → WAIT_HUMAN_SPEC (human final OK)
+         → PLAN → PLAN_REVIEW ⟲ (fix plan until Claude verdict APPROVED, zero open blocking findings)
+         → WAIT_HUMAN_PLAN (human final OK)
+         → CODE → CODE_REVIEW
+         → [blocking code bugs] WAIT_HUMAN_CODE_FIX → CODE (Grok fix) → CODE_REVIEW → …
+         → DONE
+```
+
+### Pipeline — **small** size
+
+```text
+DRAFT_SPEC (short) → SPEC_REVIEW ⟲ clean → WAIT_HUMAN_SPEC
+  → [optional PLAN + PLAN_REVIEW if needed; else plan_review/human_plan = n/a]
+  → CODE (Grok) → CODE_REVIEW → [WAIT_HUMAN_CODE_FIX → Grok] ⟲ → DONE
+```
+
+### Pipeline — **micro** size
+
+```text
+STATE size=micro, phase=CODE, iteration=1
+  gates: human_spec|human_plan|spec_review|plan_review = n/a
+  → thin HANDOFF (goal + files + verify)
+  → ./scripts/invoke-grok.sh   # Grok codes
+  → optional Claude CODE_REVIEW (quick)
+  → DONE
+```
+
+Claude may only write HANDOFF / run invoke / light review — **never** patch product code on micro either.
+
+### Blocking findings (spec, plan, and code)
+
+Open findings with severity **`critical` | `high` | `medium`** block advancement.  
+`low` / `nit` → mark `deferred` by default; do not block.
+
+### Steps (**full**; **small** skips steps marked full-only)
+
+0. **SIZE** — Set `STATE.size` to `micro` | `small` | `full`.  
+   - **micro:** set pre-code gates to `n/a`, write thin HANDOFF, jump to **CODE** (step 7).  
+   - **small/full:** continue from DRAFT_SPEC.
+
+1. **DRAFT_SPEC** — Opus writes `docs/specs/YYYY-MM-DD-<slug>-spec.md` from `docs/agent-team/templates/SPEC.template.md` (keep short on **small**).  
+   Set `gates.spec_review: pending`.
+
+2. **SPEC_REVIEW (mandatory Claude)** — Sonnet-class writes `docs/reviews/spec/YYYY-MM-DD-<slug>.md` from the review template.  
+   - Verdict **`CHANGES_REQUESTED`** or any **open** critical/high/medium → back to **DRAFT_SPEC** (author fixes), re-review. **Loop until clean.**  
+   - Verdict **`APPROVED`** and **no open blocking findings** → set `gates.spec_review: approved`.  
+   - **Do not** enter `WAIT_HUMAN_SPEC` while `spec_review` is not approved.  
+   - Cap: after **10** author↔review loops without clean APPROVED, set a human blocker in `STATE.md` and stop.
+
+3. **WAIT_HUMAN_SPEC** — Only after Claude spec review is clean. Set `gates.human_spec: pending`. **STOP.**  
+   Present **approved** spec path + last review path.  
+   - Human approve → `human_spec: approved`.  
+   - Human changes → back to DRAFT_SPEC (then full Claude review loop again).  
+   - **No PLAN** until `human_spec: approved`.
+
+4. **PLAN** (**full** required; **small** optional) — Opus writes `docs/plans/YYYY-MM-DD-<slug>-plan.md` **only if** `human_spec` and `spec_review` are approved.  
+   - **small** without separate plan: set `plan: null` (or “embedded in spec”), `plan_review: n/a`, `human_plan: n/a`.  
+   - **full** or **small** with plan: Set `gates.plan_review: pending`.
+
+5. **PLAN_REVIEW** (**full** mandatory; **small** only if a plan file exists) — Sonnet-class writes `docs/reviews/spec/YYYY-MM-DD-<slug>-plan.md`.  
+   - Same loop rules as SPEC_REVIEW until **APPROVED** + zero open blocking findings → `gates.plan_review: approved`.  
+   - **Do not** enter `WAIT_HUMAN_PLAN` while `plan_review` is not approved (when a plan is in play).  
+   - Cap: **10** plan author↔review loops, then human blocker.
+
+6. **WAIT_HUMAN_PLAN** (**full** required; **small** only if plan exists) — After Claude plan review is clean. Set `gates.human_plan: pending`. **STOP.**  
+   - Human approve → `human_plan: approved`.  
+   - **full:** **No HANDOFF / Grok** until then.  
+   - **small** with `human_plan: n/a`: skip this wait; go to CODE after `human_spec` approved.
+
+7. **CODE** — Fill `HANDOFF.md`, `phase: CODE`, `./scripts/invoke-grok.sh` (iter 1) when gates allow. **Grok always implements** (including micro). Claude does not.
+
+8. **CODE_REVIEW** — Sonnet writes `docs/reviews/code/YYYY-MM-DD-<slug>-iter-N.md` (micro: optional but recommended if non-trivial).  
+   - No open blocking findings → `code_review: approved` → **DONE**.  
+   - Open blocking findings → `code_review: open`, `human_code_fix: pending`, **WAIT_HUMAN_CODE_FIX**. **STOP** (do not auto-Grok).
+
+9. **WAIT_HUMAN_CODE_FIX** — Human approves fix list → `human_code_fix: approved` → fix-only HANDOFF → Grok → CODE_REVIEW again.
+
+10. **DONE** — `phase: DONE` when code review is clean and gates allow.
+
+Each phase: **act → write artifact → update STATE → gate check**.  
+If `WAIT_HUMAN_*`: **stop and ask human** (do not continue the same turn).
+
+### Stop rules (non-negotiable)
+
+| After… | Required next | Must not |
+|--------|----------------|----------|
+| Spec draft | **Claude SPEC_REVIEW loop until clean** | Skip review; go straight to human or PLAN |
+| Spec Claude-clean | **WAIT_HUMAN_SPEC** | Start PLAN without human |
+| Plan draft | **Claude PLAN_REVIEW loop until clean** | Skip review; go straight to human or CODE |
+| Plan Claude-clean | **WAIT_HUMAN_PLAN** | Invoke Grok without human |
+| Code review blocking bugs | **WAIT_HUMAN_CODE_FIX** | Auto HANDOFF + Grok without human |
+
+**Never** treat human approval as a substitute for Claude spec/plan review.  
+**Never** treat Claude review as a substitute for human gates on spec/plan/code-fix.
+
+## Iteration limits
+
+| Loop | Max without clean APPROVED | Then |
+|------|----------------------------|------|
+| Spec author ↔ SPEC_REVIEW | **10** | `blockers` + stop for human |
+| Plan author ↔ PLAN_REVIEW | **10** | `blockers` + stop for human |
+| Code fix ↔ CODE_REVIEW | **10** | `blockers` + stop (no silent Grok) |
 
 ## HANDOFF rules (anti-context-loss)
 
@@ -39,48 +153,48 @@ Do not paste full chat history into the CLI. Prefer file paths.
 
 Orchestrator must confirm:
 
-- [ ] `STATE.md` `phase` is `CODE` (not `IDLE`)
-- [ ] `STATE.md` `feature` slug matches HANDOFF feature slug
-- [ ] `STATE.md` `iteration` equals HANDOFF **Iteration**
-- [ ] If iteration > 1: HANDOFF **Latest review** points at `STATE.latest_code_review`
-- [ ] HANDOFF Goal is real work (no idle sentinel / empty scope)
-- [ ] `## Grok result` is cleared or set to `pending` (do not leave a previous **pass**)
-- [ ] If iteration > 1: open findings table lists only unresolved blocking items
-- [ ] Verify commands are real project commands (not bare `true` unless intentional smoke)
+- [ ] `STATE.size` is `micro` | `small` | `full` (not null)
+- [ ] **micro:** pre-code gates `n/a`; thin HANDOFF enough  
+- [ ] **small/full:** `spec_review` + `human_spec` approved; plan gates approved or `n/a` as allowed  
+- [ ] If iteration ≥ 2: `human_code_fix: approved`
+- [ ] `STATE.md` `phase` is `CODE` (not `WAIT_HUMAN_*` / `IDLE`)
+- [ ] Feature slug + iteration match HANDOFF
+- [ ] If iteration > 1: Latest review + open findings table only
+- [ ] `## Grok result` is `pending` only
+- [ ] Real verify commands
 
 `invoke-grok.sh` **enforces** (hard fail):
 
-- HANDOFF + STATE both `phase`/`STATE phase` = `CODE`
-- Feature slug + iteration match and are non-null / ≥ 1
-- No idle sentinel; `## Grok result` contains `pending`
-
-Remaining checklist items (verify commands quality, findings table content) are orchestrator discipline.
+- `size` is `micro` | `small` | `full`  
+- Phase CODE; slug/iter sync  
+- **micro:** human_spec/plan + spec/plan_review may be `n/a`  
+- **small:** human_spec + spec_review approved; plan gates approved or `n/a`  
+- **full:** all four pre-code gates approved  
+- Iteration ≥ 2 → human_code_fix approved  
+- Strict pending Grok result body; exact idle sentinel rules  
 
 ## Context7 / index MCP
 
-Use for understanding existing code. **Not** a source of product requirements. Requirements live in spec + handoff only.
+Use for understanding existing code. **Not** a source of product requirements.
 
-## Optional: ECC (and similar harness packs)
+## Optional: Superpowers / ECC
 
-This pipeline stays primary. ECC skills/agents may help Claude write better specs/reviews — they must not skip phases, replace Grok on CODE, or invent requirements outside disk artifacts.
+Pipeline stays primary. Packs must not skip **Claude spec/plan review-until-clean**, **WAIT_HUMAN_***, or Grok CODE path.
 
-Full policy: [ECC-INTEGRATION.md](./ECC-INTEGRATION.md).
+- [SUPERPOWERS-INTEGRATION.md](./SUPERPOWERS-INTEGRATION.md)
+- [ECC-INTEGRATION.md](./ECC-INTEGRATION.md)
 
-## Architecture (v1, consumer-facing)
+## Architecture
 
 | Piece | Role |
 |-------|------|
-| `AGENTS.md` | Shared map for Claude + Grok |
-| `CLAUDE.md` | Orchestrator duties + Karpathy principles |
-| `GROK.md` | Thin coder contract |
-| `docs/specs`, `docs/plans`, `docs/reviews` | Durable artifacts |
-| `docs/agent-team/HANDOFF.md` | Active Grok task (anti-context-loss) |
-| `docs/agent-team/STATE.md` | Phase + gates (one feature at a time) |
-| `docs/agent-team/ECC-INTEGRATION.md` | Optional ECC (or similar) integration policy |
-| `VERSION` / `CHANGELOG.md` | Template release identity |
-| `scripts/grok-wrapper.example.sh` | Optional local Grok CLI adapter |
-| Context7 / index MCP | Code lookup only |
+| `AGENTS.md` | Shared map |
+| `CLAUDE.md` | Orchestrator: review loops + human stops |
+| `GROK.md` | Coder contract |
+| `docs/specs`, `docs/plans`, `docs/reviews` | Artifacts |
+| `STATE.md` / `HANDOFF.md` | Phase + gates + Grok task |
+| `scripts/invoke-grok.sh` | Grok only when all gates pass |
 
 ## Copy into a new project
 
-See [README.md](./README.md) for greenfield and brownfield install (do not blindly overwrite existing `CLAUDE.md`).
+See [README.md](./README.md) for install.

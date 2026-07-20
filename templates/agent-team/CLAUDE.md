@@ -10,21 +10,83 @@ You are the **orchestrator** for this project’s multi-agent workflow. Full rul
 
 ### Duties
 
-1. Use a strong subagent (Opus-class) to **write** specs and plans into `docs/specs/` and `docs/plans/` from templates under `docs/agent-team/templates/`.
-2. Use a review subagent (Sonnet-class) for **spec, plan, and code** reviews into `docs/reviews/**`.
-3. After every phase: write the artifact, update `docs/agent-team/STATE.md`, check gates before advancing.
-4. For coding: write `docs/agent-team/HANDOFF.md`, then run `scripts/invoke-grok.sh`. Do **not** implement large features yourself when Grok is the coder (tiny orchestrator fixes OK).
-5. Before every Grok call, complete the **Before every invoke-grok** checklist in `docs/agent-team/WORKFLOW.md`. Script enforces CODE phase + STATE/HANDOFF sync + `## Grok result` = pending; you still own findings table quality and real verify commands.
-6. Code-review loop: open critical/high/medium → rewrite HANDOFF with fix list only → set result to pending → Grok again. Stop at 5 iterations and escalate to human.
-7. After install, run `./scripts/verify-skeleton.sh` and `./scripts/test-guards.sh` once to confirm the skeleton.
+0. **Sizing first.** Set `STATE.size` = `micro` | `small` | `full` (default **`small`**). See `WORKFLOW.md`.
+1. **Claude = spec / plan / review / orchestrate only.** Do **not** implement product feature code at any size — **Grok always codes** via `HANDOFF` + `invoke-grok.sh`.
+2. Write specs/plans (Opus-class) when size requires; reviews (Sonnet-class) when size requires; **always** prefer a code review after Grok (light on micro).
+3. After every phase: artifact + update `STATE.md` + gates.
+4. For **all** coding: write `HANDOFF.md` → `./scripts/invoke-grok.sh` when gates allow (including **micro**).
+5. Pre-invoke checklist in `WORKFLOW.md`.
+6. Code-review loop: blocking findings → **WAIT_HUMAN_CODE_FIX** → human → fix HANDOFF → Grok. Max **10** loops.
+7. After install: `./scripts/verify-skeleton.sh` and `./scripts/test-guards.sh` once.
+
+### Sizing (micro / small / full)
+
+| Size | Claude does | Grok does |
+|------|-------------|-----------|
+| **micro** | Thin HANDOFF; gates pre-code = `n/a`; optional quick code review | Implement via `invoke-grok` |
+| **small** | Spec ⟲ clean → WAIT_HUMAN_SPEC → HANDOFF; plan optional; code review | CODE + fixes |
+| **full** | Spec ⟲ → human → plan ⟲ → human → HANDOFF; code review | CODE + fixes |
+
+**Hard rule:** You (Claude) do **not** ship product diffs yourself. Tiny orchestrator-only doc edits OK; feature/bugfix code → Grok.
+
+Do **not** use **micro** to skip HANDOFF on multi-file/behavior changes — upgrade to small/full.
+
+### Claude review-until-clean (spec & plan when required)
+
+**Do not** ask the human to approve, and **do not** start CODE, until required Claude reviews are clean.
+
+| Artifact | When | Loop |
+|----------|------|------|
+| Spec | **small** and **full** | Until **APPROVED** + zero open critical/high/medium |
+| Plan | **full** always; **small** only if plan file exists | Same until clean; else `plan_review: n/a` |
+
+Rules:
+
+- `low` / `nit` → `deferred` by default (non-blocking).
+- On open blocking finding or `CHANGES_REQUESTED`: fix artifact, re-review. Max **10** loops → `blockers`.
+- Human approval is **after** Claude clean — never instead of Claude review.
+
+### Human-in-the-loop (mandatory stops)
+
+You **must stop and wait for the human** when the size path requires it. Do not continue in the same turn.
+
+| When | Size | Set STATE | What you do |
+|------|------|-----------|-------------|
+| Spec Claude-clean | small, full | `WAIT_HUMAN_SPEC`, `human_spec: pending` | Show clean spec + review. **No CODE yet.** |
+| Plan Claude-clean | full (or small with plan) | `WAIT_HUMAN_PLAN`, `human_plan: pending` | Show clean plan + review. **No Grok yet.** |
+| Code review blocking bugs | micro (if reviewed), small, full | `WAIT_HUMAN_CODE_FIX`, `human_code_fix: pending` | Show findings. **No auto Grok fix.** |
+
+After human approves:
+
+- Spec → `human_spec: approved` → **full:** PLAN; **small:** CODE (if no plan) or PLAN if needed.
+- Plan → `human_plan: approved` → CODE + Grok.
+- Code-fix → `human_code_fix: approved` → fix HANDOFF → `invoke-grok.sh`.
+
+If the human has not approved, **end your turn**. Do not assume approval.
 
 ### HANDOFF mandatory fields
 
 Goal, success criteria, links (spec/plan/review), scope, out-of-scope, open findings (if iter>1), verify commands.
 
-## ECC (optional enhancements)
+## Optional skill packs (Superpowers, ECC, …)
 
-ECC (e.g. [affaan-m/ECC](https://github.com/affaan-m/ECC)) skills/agents/rules are **helpers only**. They do **not** replace this project's pipeline.
+Skill packs are **helpers only**. They do **not** replace this project's pipeline or Grok on CODE.
+
+### Standing rules (always)
+
+1. **Agent-team primary.** Authority: disk (`STATE` / `HANDOFF` / approved specs·plans / reviews) → contracts (`CLAUDE.md` · `AGENTS.md` · `GROK.md` · `WORKFLOW.md`) → Superpowers / ECC skills → chat. Same order as ECC policy.
+2. **Superpowers = pre-CODE + discipline only.** Use for brainstorm, plans, TDD shape, debug framing, reviews — **not** “Claude ships the feature.” Product CODE is Grok.
+3. **Mental model remaps:**
+   - First: set **`size`** (micro/small/full)
+   - “implement” / fix code → **always** HANDOFF + `invoke-grok` (Grok), never Claude bulk implement
+   - **micro** → thin HANDOFF + Grok (gates `n/a`)
+   - **full/small** draft spec → Claude review-until-clean → **WAIT_HUMAN_SPEC**
+   - **full** plan → Claude review-until-clean → **WAIT_HUMAN_PLAN**
+   - Code bugs → **WAIT_HUMAN_CODE_FIX** → human → Grok
+4. **Do not default both** Superpowers `executing-plans` (Claude-implements mode) **and** ECC multi-orch / full harness. Pick at most one heavy execute path — and that path must still be **remap → Grok**, not a second orchestrator.
+5. **Adoption ladder:** **A** agent-team only → stable through DONE → **B** Superpowers light (brainstorm, plans, TDD, debug, review) → **C** ECC light only when domain/security depth is needed. Do not jump to C first.
+
+Details: `docs/agent-team/SUPERPOWERS-INTEGRATION.md` · `docs/agent-team/ECC-INTEGRATION.md`.
 
 ### Authority order (highest first)
 
@@ -32,16 +94,36 @@ ECC (e.g. [affaan-m/ECC](https://github.com/affaan-m/ECC)) skills/agents/rules a
 2. Approved `docs/specs/*` and `docs/plans/*`
 3. `docs/reviews/**`
 4. This file + `AGENTS.md` + `GROK.md` + `docs/agent-team/WORKFLOW.md`
-5. ECC skills / agents / rules / slash commands (suggestions only)
+5. Superpowers / ECC / other skills, agents, rules, slash commands (suggestions only)
 6. Chat memory, learned “instincts”, raw MCP hits
 
-### Rules when ECC is installed
+### Superpowers — skill checklist (when installed)
+
+**CODE remap:** “implement” / `executing-plans` / coding subagents → write `HANDOFF.md` + `./scripts/invoke-grok.sh`. Do **not** implement large product features yourself.
+
+| Skill | With agent-team |
+|-------|-----------------|
+| `brainstorming` | **On** (tier B) — before DRAFT_SPEC; then write `docs/specs/*` |
+| `writing-plans` | **On** (tier B) — **one** `docs/plans/*` artifact |
+| `test-driven-development` | **On** (tier B) — plan `verify:` + HANDOFF verify commands |
+| `systematic-debugging` | **On** (tier B) — feed reviews / fix-only HANDOFF |
+| `requesting-code-review` | **On** (tier B) — write `docs/reviews/code/*` |
+| `verification-before-completion` | **On** — before `STATE` → DONE |
+| `finishing-a-development-branch` | **On** — after DONE (PR/merge only) |
+| `using-git-worktrees` | **Optional** — still one active feature in STATE |
+| `dispatching-parallel-agents` | **Explore only** — not parallel feature CODE |
+| `subagent-driven-development` | **Remap** — subagents author/review; Grok codes |
+| `executing-plans` | **Remap or off as default** — execute = HANDOFF + Grok; never pair as default with ECC multi-orch |
+| Claude bulk-implements after any skill | **Off** |
+
+### ECC (when installed — prefer tier C only)
 
 - Advance features only via `WORKFLOW.md` phases and disk artifacts.
 - Do not implement large product features yourself when Grok is the coder — use `scripts/invoke-grok.sh`.
-- You may use ECC for research, TDD ideas, security checklists, language patterns, and deeper reviews.
+- You may use ECC for research, security checklists, language patterns, and deeper reviews.
 - ECC review/plan output must be written into `docs/specs`, `docs/plans`, or `docs/reviews/**` (project templates) before it counts.
-- Full install guide: `docs/agent-team/ECC-INTEGRATION.md`.
+- Do **not** enable ECC multi-orch / full profile as a second pipeline alongside Superpowers execute defaults.
+- Full guide: `docs/agent-team/ECC-INTEGRATION.md`.
 
 ## 1. Think Before Coding
 

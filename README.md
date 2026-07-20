@@ -1,212 +1,229 @@
-# Karpathy-Inspired Claude Code Guidelines
+# Hướng dẫn Claude Code theo tinh thần Karpathy + Agent Team
 
-> Check out my new project [Multica](https://github.com/multica-ai/multica) — an open-source platform for running and managing coding agents with reusable skills.
->
-> Follow me on X: [https://x.com/jiayuan_jy](https://x.com/jiayuan_jy)
+Repo packaging này có **hai phần**:
 
-## Project purpose (this repository)
+1. **Hướng dẫn Karpathy** — `CLAUDE.md`, skill, ví dụ — giúp LLM code ít ẩu hơn.
+2. **Template Agent-team** (`templates/agent-team/`, v1.3+) — Claude điều phối + chọn size micro/small/full + bạn duyệt + Grok code, SSOT trên disk.  
+   Hướng dẫn chi tiết: [`templates/agent-team/docs/agent-team/USAGE.md`](./templates/agent-team/docs/agent-team/USAGE.md)  
+   Cài: `./scripts/install-agent-team.sh`
 
-This packaging repo ships **two complementary deliverables**:
-
-1. **Karpathy guidelines** — root `CLAUDE.md`, Cursor rule, skill, and examples for better LLM coding behavior.
-2. **Agent-team template** (`templates/agent-team/`, v1.1+) — Claude orchestrates + Grok codes via disk SSOT (`HANDOFF` / `STATE`), with optional [ECC](https://github.com/affaan-m/ECC) as a secondary skill pack. Install: `./scripts/install-agent-team.sh`.
-
-English | [简体中文](./README.zh.md)
+Tài liệu repo này dùng **tiếng Việt**.
 
 ---
 
-A single `CLAUDE.md` file to improve Claude Code behavior, derived from [Andrej Karpathy's observations](https://x.com/karpathy/status/2015883857489522876) on LLM coding pitfalls.
+Một file `CLAUDE.md` để cải thiện hành vi Claude Code, dựa trên [quan sát của Andrej Karpathy](https://x.com/karpathy/status/2015883857489522876) về các lỗi LLM hay mắc khi code.
 
-## The Problems
+## Vấn đề
 
-From Andrej's post:
+Từ bài của Andrej (tóm tắt):
 
-> "The models make wrong assumptions on your behalf and just run along with them without checking. They don't manage their confusion, don't seek clarifications, don't surface inconsistencies, don't present tradeoffs, don't push back when they should."
+- Model hay **đoán mò** rồi làm tiếp, không hỏi, không nêu tradeoff, không phản biện khi cần.
+- Hay **làm phức tạp** code/API, abstraction dư, hàng trăm dòng trong khi vài chục là đủ.
+- Đôi khi **sửa/xóa** comment hoặc code không liên quan.
 
-> "They really like to overcomplicate code and APIs, bloat abstractions, don't clean up dead code... implement a bloated construction over 1000 lines when 100 would do."
+## Giải pháp — bốn nguyên tắc
 
-> "They still sometimes change/remove comments and code they don't sufficiently understand as side effects, even if orthogonal to the task."
-
-## The Solution
-
-Four principles in one file that directly address these issues:
-
-| Principle | Addresses |
-|-----------|-----------|
-| **Think Before Coding** | Wrong assumptions, hidden confusion, missing tradeoffs |
-| **Simplicity First** | Overcomplication, bloated abstractions |
-| **Surgical Changes** | Orthogonal edits, touching code you shouldn't |
-| **Goal-Driven Execution** | Leverage through tests-first, verifiable success criteria |
-
-## The Four Principles in Detail
+| Nguyên tắc | Xử lý |
+|------------|--------|
+| **Think Before Coding** | Giả định sai, che giấu bối rối, thiếu tradeoff |
+| **Simplicity First** | Over-engineer, abstraction phình |
+| **Surgical Changes** | Sửa lung tung ngoài phạm vi |
+| **Goal-Driven Execution** | Mục tiêu có verify, test-first |
 
 ### 1. Think Before Coding
 
-**Don't assume. Don't hide confusion. Surface tradeoffs.**
+**Đừng đoán. Đừng giấu bối rối. Nêu tradeoff.**
 
-LLMs often pick an interpretation silently and run with it. This principle forces explicit reasoning:
-
-- **State assumptions explicitly** — If uncertain, ask rather than guess
-- **Present multiple interpretations** — Don't pick silently when ambiguity exists
-- **Push back when warranted** — If a simpler approach exists, say so
-- **Stop when confused** — Name what's unclear and ask for clarification
+- Nêu giả định rõ; không chắc thì hỏi
+- Nhiều cách hiểu → trình bày, đừng chọn thầm
+- Có cách đơn giản hơn → nói ra
+- Bối rối → dừng, nêu chỗ chưa rõ, hỏi
 
 ### 2. Simplicity First
 
-**Minimum code that solves the problem. Nothing speculative.**
+**Code tối thiểu đủ việc. Không suy đoán thừa.**
 
-Combat the tendency toward overengineering:
+- Không feature ngoài yêu cầu
+- Không abstraction chỉ dùng một lần
+- Không “config linh hoạt” khi chưa ai hỏi
+- Không try/catch cho case không thể xảy ra
+- 200 dòng mà 50 đủ → viết lại
 
-- No features beyond what was asked
-- No abstractions for single-use code
-- No "flexibility" or "configurability" that wasn't requested
-- No error handling for impossible scenarios
-- If 200 lines could be 50, rewrite it
-
-**The test:** Would a senior engineer say this is overcomplicated? If yes, simplify.
+**Thử:** Senior có bảo “phức tạp quá” không? Có → đơn giản hóa.
 
 ### 3. Surgical Changes
 
-**Touch only what you must. Clean up only your own mess.**
+**Chỉ đụng phần cần. Chỉ dọn rác do mình tạo.**
 
-When editing existing code:
+Khi sửa code có sẵn:
 
-- Don't "improve" adjacent code, comments, or formatting
-- Don't refactor things that aren't broken
-- Match existing style, even if you'd do it differently
-- If you notice unrelated dead code, mention it — don't delete it
+- Đừng “cải thiện” code/comment/format bên cạnh
+- Đừng refactor thứ đang chạy ổn
+- Bám style hiện có
+- Dead code không liên quan → nhắc, **đừng** xóa bừa
 
-When your changes create orphans:
+Rác do thay đổi của bạn tạo ra → xóa import/hàm không dùng. Dead code cũ → chỉ xóa khi được yêu cầu.
 
-- Remove imports/variables/functions that YOUR changes made unused
-- Don't remove pre-existing dead code unless asked
-
-**The test:** Every changed line should trace directly to the user's request.
+**Thử:** Mọi dòng diff phải truy về đúng yêu cầu.
 
 ### 4. Goal-Driven Execution
 
-**Define success criteria. Loop until verified.**
+**Định nghĩa tiêu chí thành công. Lặp đến khi verify được.**
 
-Transform imperative tasks into verifiable goals:
+| Thay vì… | Thành… |
+|----------|--------|
+| “Thêm validation” | “Viết test input invalid rồi làm pass” |
+| “Sửa bug” | “Viết test tái hiện rồi làm pass” |
+| “Refactor X” | “Test pass trước và sau” |
 
-| Instead of... | Transform to... |
-|--------------|-----------------|
-| "Add validation" | "Write tests for invalid inputs, then make them pass" |
-| "Fix the bug" | "Write a test that reproduces it, then make it pass" |
-| "Refactor X" | "Ensure tests pass before and after" |
+Multi-step:
 
-For multi-step tasks, state a brief plan:
-
-```
-1. [Step] → verify: [check]
-2. [Step] → verify: [check]
-3. [Step] → verify: [check]
+```text
+1. [Bước] → verify: [kiểm tra]
+2. [Bước] → verify: [kiểm tra]
 ```
 
-Strong success criteria let the LLM loop independently. Weak criteria ("make it work") require constant clarification.
+Tiêu chí mạnh → LLM tự loop. Tiêu chí yếu (“cho chạy được”) → phải hỏi liên tục.
 
-## Install
+## Cài hướng dẫn Karpathy
 
-**Option A: Claude Code Plugin (recommended)**
+**Cách A: Plugin Claude Code**
 
-From within Claude Code, first add the marketplace:
-```
+```text
 /plugin marketplace add forrestchang/andrej-karpathy-skills
-```
-
-Then install the plugin:
-```
 /plugin install andrej-karpathy-skills@karpathy-skills
 ```
 
-This installs the guidelines as a Claude Code plugin, making the skill available across all your projects.
+**Cách B: File `CLAUDE.md` theo project**
 
-**Option B: CLAUDE.md (per-project)**
-
-New project:
 ```bash
+# Project mới
 curl -o CLAUDE.md https://raw.githubusercontent.com/forrestchang/andrej-karpathy-skills/main/CLAUDE.md
-```
 
-Existing project (append):
-```bash
+# Project có sẵn (nối thêm)
 echo "" >> CLAUDE.md
 curl https://raw.githubusercontent.com/forrestchang/andrej-karpathy-skills/main/CLAUDE.md >> CLAUDE.md
 ```
 
-## Using with Cursor
+## Dùng với VS Code / editor khác
 
-This repository includes a committed Cursor project rule ([`.cursor/rules/karpathy-guidelines.mdc`](.cursor/rules/karpathy-guidelines.mdc)) so the same guidelines apply when you open the project in Cursor. See **[CURSOR.md](CURSOR.md)** for setup, using the rule in other projects, and how this relates to Claude Code.
+- **Claude Code / agent trong VS Code:** dùng root [`CLAUDE.md`](CLAUDE.md) (và skill nếu plugin hỗ trợ).
+- **Project app dùng Agent-team:** cài template rồi đọc [`USAGE.md`](./templates/agent-team/docs/agent-team/USAGE.md).
 
-## Key Insight
+## Làm sao biết đang “đúng hướng”
 
-From Andrej:
+- Diff gọn, ít sửa ngoài phạm vi
+- Ít phải viết lại vì over-engineer
+- Hỏi làm rõ **trước** khi code ẩu
+- PR sạch, không refactor “tiện tay”
 
-> "LLMs are exceptionally good at looping until they meet specific goals... Don't tell it what to do, give it success criteria and watch it go."
+## Ghi chú tradeoff
 
-The "Goal-Driven Execution" principle captures this: transform imperative instructions into declarative goals with verification loops.
+Hướng dẫn thiên về **cẩn thận hơn tốc độ**. Task trivial (typo, một dòng rõ) → dùng phán đoán, không cần full nghi thức.
 
-## How to Know It's Working
+## Template Agent Team (Claude + Grok)
 
-These guidelines are working if you see:
+Skeleton multi-agent: Claude điều phối, Grok code qua CLI, SSOT trên disk + HANDOFF + sizing:
 
-- **Fewer unnecessary changes in diffs** — Only requested changes appear
-- **Fewer rewrites due to overcomplication** — Code is simple the first time
-- **Clarifying questions come before implementation** — Not after mistakes
-- **Clean, minimal PRs** — No drive-by refactoring or "improvements"
+| Tài liệu | Mô tả |
+|----------|--------|
+| [`templates/agent-team/`](./templates/agent-team/) | Skeleton |
+| [`USAGE.md`](./templates/agent-team/docs/agent-team/USAGE.md) | **Hướng dẫn xài chi tiết (tiếng Việt)** |
+| [`docs/agent-team/README.md`](./templates/agent-team/docs/agent-team/README.md) | Cài greenfield/brownfield |
+| Superpowers / ECC | Tuỳ chọn — xem file trong template |
+| Design / plan | `docs/superpowers/` |
 
-## Customization
+**`CLAUDE.md` hai vai trò**
 
-These guidelines are designed to be merged with project-specific instructions. Add them to your existing `CLAUDE.md` or create a new one.
+| Vị trí | Ý nghĩa |
+|--------|---------|
+| Root [`CLAUDE.md`](./CLAUDE.md) | Karpathy cho *repo packaging này* |
+| [`templates/agent-team/CLAUDE.md`](./templates/agent-team/CLAUDE.md) | Contract **orchestrator** sau khi cài vào app |
 
-For project-specific rules, add sections like:
+### Cài template vào project app — hiểu đúng trước khi gõ lệnh
 
-```markdown
-## Project-Specific Guidelines
+Có **hai chỗ khác nhau**. Install **không** tự bay sang app: bạn phải trỏ path.
 
-- Use TypeScript strict mode
-- All API endpoints must have tests
-- Follow the existing error handling patterns in `src/utils/errors.ts`
+| | **Repo packaging** (repo này, ví dụ `ClaudeTeamExample`) | **Project app** (app bạn code, ví dụ `my-shop`) |
+|--|----------------------------------------------------------|--------------------------------------------------|
+| Vai trò | Chứa **khuôn** `templates/agent-team/` + script cài | Nơi **thật sự** làm feature |
+| Bạn làm gì | Chạy **1 lệnh install**, trỏ path sang app | Vào app → verify → dùng Claude / Grok |
+
+```text
+[ClaudeTeamExample]  ./scripts/install-agent-team.sh  →  [my-shop]
+                              (copy khuôn)
+[my-shop]  verify-skeleton + test-guards
+[my-shop]  Claude + (khi CODE) invoke-grok
 ```
 
-## Tradeoff Note
+**Không** cần mỗi ngày quay lại packaging. Packaging chỉ lúc:
 
-These guidelines bias toward **caution over speed**. For trivial tasks (simple typo fixes, obvious one-liners), use judgment — not every change needs the full rigor.
+- **Cài lần đầu** vào app, hoặc  
+- **Nâng cấp** template (`install --brownfield` lại)
 
-The goal is reducing costly mistakes on non-trivial work, not slowing down simple tasks.
+#### Ví dụ cụ thể
 
-## Agent Team Template (Claude + Grok)
+Giả sử:
 
-Copy-paste skeleton for multi-agent workflow (Claude orchestrates, Grok codes via CLI, disk SSOT + HANDOFF):
+- Packaging: `~/Documents/ClaudeTeamExample`
+- App: `~/Documents/my-shop`
 
-- Skeleton: [`templates/agent-team/`](./templates/agent-team/)
-- How to copy (greenfield **and brownfield**): [`templates/agent-team/docs/agent-team/README.md`](./templates/agent-team/docs/agent-team/README.md)
-- Optional ECC integration (this pipeline stays primary): [`templates/agent-team/docs/agent-team/ECC-INTEGRATION.md`](./templates/agent-team/docs/agent-team/ECC-INTEGRATION.md)
-- Design: [`docs/superpowers/specs/2026-07-20-agent-team-template-design.md`](./docs/superpowers/specs/2026-07-20-agent-team-template-design.md)
-- Plan: [`docs/superpowers/plans/2026-07-20-agent-team-template.md`](./docs/superpowers/plans/2026-07-20-agent-team-template.md)
-
-**CLAUDE.md identity**
-
-| Location | Meaning |
-|----------|---------|
-| Root [`CLAUDE.md`](./CLAUDE.md) | Karpathy guidelines for *this packaging repo* |
-| [`templates/agent-team/CLAUDE.md`](./templates/agent-team/CLAUDE.md) | Consumer **orchestrator** contract (after copy into a project) |
-
-**Install (from this packaging repo):**
+**Bước 1 — đứng ở repo packaging, chạy install**
 
 ```bash
-# recommended — auto greenfield/brownfield
-./scripts/install-agent-team.sh /path/to/your-project
+cd ~/Documents/ClaudeTeamExample
 
+# App đã có code / git → brownfield (an toàn hơn, khuyên dùng)
+./scripts/install-agent-team.sh ~/Documents/my-shop --brownfield
+
+# App trống hoàn toàn
+# ./scripts/install-agent-team.sh ~/Documents/my-shop --greenfield
+```
+
+Lệnh này **copy** skeleton (`CLAUDE`/`AGENTS`/`GROK`, `docs/agent-team/`, scripts…) **vào** `my-shop`.
+
+**Bước 2 — đứng ở project app, kiểm tra**
+
+```bash
+cd ~/Documents/my-shop
+./scripts/verify-skeleton.sh && ./scripts/test-guards.sh
+```
+
+Hai script này **đã nằm trong app** sau bước 1 (không chạy trong packaging nữa, trừ khi bạn test template).
+
+**Bước 3 — làm việc trong app**
+
+- Mở **`my-shop`** bằng VS Code + Claude  
+- Đọc `docs/agent-team/USAGE.md`  
+- Nói: `size: small — …`  
+- Khi đến CODE: trong **my-shop** chạy `./scripts/invoke-grok.sh`
+
+#### Các flag install
+
+| Lệnh / flag | Ý nghĩa |
+|-------------|---------|
+| `./scripts/install-agent-team.sh /path/to/app` | Auto: folder **trống** → greenfield; **đã có file** → brownfield |
+| `--greenfield` | Copy full template; **từ chối** nếu folder đã có đồ (trừ `--force`) |
+| `--greenfield --force` | Greenfield dù folder không trống (có thể đè file trùng tên) |
+| `--brownfield` | Cài vào project cũ; **không đè** `CLAUDE.md`; **giữ** `STATE.md` / `HANDOFF.md` |
+| `--dry-run` | Chỉ in ra sẽ làm gì, **chưa** copy |
+
+```bash
+# Từ root repo packaging (ClaudeTeamExample)
+./scripts/install-agent-team.sh /path/to/your-project
 ./scripts/install-agent-team.sh /path/to/your-project --greenfield
-./scripts/install-agent-team.sh /path/to/your-project --brownfield   # never overwrites CLAUDE.md
+./scripts/install-agent-team.sh /path/to/your-project --greenfield --force
+./scripts/install-agent-team.sh /path/to/your-project --brownfield
 ./scripts/install-agent-team.sh /path/to/your-project --dry-run
 ```
 
-After install: `cd /path/to/your-project && ./scripts/verify-skeleton.sh && ./scripts/test-guards.sh`
+#### Tóm một câu
 
-CI: [`.github/workflows/agent-team-ci.yml`](./.github/workflows/agent-team-ci.yml) runs skeleton + guard tests on template changes.
+**Chạy bash ở repo packaging (install, trỏ path app) → sang app chạy bash verify → sau đó chỉ làm việc trong app.**  
+Script làm giúp phần copy; không phải copy tay từng file.
 
-## License
+CI template: [`.github/workflows/agent-team-ci.yml`](./.github/workflows/agent-team-ci.yml).
 
-MIT — see [`LICENSE`](./LICENSE).
+## Giấy phép
+
+MIT — xem [`LICENSE`](./LICENSE).

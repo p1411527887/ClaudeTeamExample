@@ -11,11 +11,11 @@ Thin contract for Grok CLI. Details live in linked files—do not invent scope.
 
 Also respect shared map: `AGENTS.md`.
 
-Optional Claude-side packs (e.g. ECC) are **not** requirements for you. Only HANDOFF + linked files define scope.
+Optional Claude-side packs (Superpowers, ECC, …) are **not** requirements for you. Only HANDOFF + linked files define scope.
 
 ## Rules
 
-1. **Scope = HANDOFF only.** No nice-to-haves, no drive-by refactors. Ignore ECC/skills unless HANDOFF explicitly links a file.
+1. **Scope = HANDOFF only.** No nice-to-haves, no drive-by refactors. Ignore Superpowers/ECC/skills unless HANDOFF explicitly links a file.
 2. **Surgical changes.** Match existing style. Touch only required files.
 3. **Verify.** Run the verify commands listed in HANDOFF. Replace `## Grok result` (was `pending`) with pass/fail + commands. Do not leave a prior result sitting there.
 4. **Do not** edit `docs/agent-team/WORKFLOW.md` or templates unless HANDOFF explicitly says so.

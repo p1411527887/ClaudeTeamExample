@@ -46,10 +46,25 @@ jobs:
           /tmp/agent-team-gf/scripts/verify-skeleton.sh
           /tmp/agent-team-gf/scripts/test-guards.sh
           test -f /tmp/agent-team-gf/docs/agent-team/ECC-INTEGRATION.md
+          test -f /tmp/agent-team-gf/docs/agent-team/SUPERPOWERS-INTEGRATION.md
           test -f /tmp/agent-team-gf/scripts/grok-wrapper.example.sh
           test -f /tmp/agent-team-gf/VERSION
           # No broken relative install link that points outside the project
           ! grep -qE '\]\(\.\./\.\./\.\./\.\./scripts/install-agent-team' /tmp/agent-team-gf/docs/agent-team/README.md
+
+      - name: Greenfield refuses non-empty without --force
+        run: |
+          rm -rf /tmp/agent-team-gf-full
+          mkdir -p /tmp/agent-team-gf-full
+          echo '{"name":"app"}' > /tmp/agent-team-gf-full/package.json
+          if ./scripts/install-agent-team.sh /tmp/agent-team-gf-full --greenfield; then
+            echo "expected greenfield to fail on non-empty dest" >&2
+            exit 1
+          fi
+          # auto mode must choose brownfield when dest has files
+          ./scripts/install-agent-team.sh /tmp/agent-team-gf-full
+          test -f /tmp/agent-team-gf-full/package.json
+          test -f /tmp/agent-team-gf-full/scripts/invoke-grok.sh
 
       - name: Install brownfield end-to-end
         run: |
@@ -57,8 +72,24 @@ jobs:
           mkdir -p /tmp/agent-team-bf
           echo "# mine" > /tmp/agent-team-bf/CLAUDE.md
           echo "# existing agents" > /tmp/agent-team-bf/AGENTS.md
+          echo "1.0.0-app" > /tmp/agent-team-bf/VERSION
           ./scripts/install-agent-team.sh /tmp/agent-team-bf --brownfield
           grep -q mine /tmp/agent-team-bf/CLAUDE.md
           test -f /tmp/agent-team-bf/CLAUDE.agent-team.md
           test -f /tmp/agent-team-bf/AGENTS.agent-team.md
+          grep -q '1.0.0-app' /tmp/agent-team-bf/VERSION
+          test -f /tmp/agent-team-bf/VERSION.agent-team
           /tmp/agent-team-bf/scripts/verify-skeleton.sh
+
+      - name: Brownfield preserves STATE and HANDOFF
+        run: |
+          rm -rf /tmp/agent-team-bf-state
+          mkdir -p /tmp/agent-team-bf-state
+          echo "# mine" > /tmp/agent-team-bf-state/CLAUDE.md
+          ./scripts/install-agent-team.sh /tmp/agent-team-bf-state --brownfield
+          printf '%s\n' '# Agent Team State' '' '```yaml' 'feature: keep-me' 'phase: CODE' 'iteration: 3' '```' \
+            > /tmp/agent-team-bf-state/docs/agent-team/STATE.md
+          echo "KEEP_HANDOFF" > /tmp/agent-team-bf-state/docs/agent-team/HANDOFF.md
+          ./scripts/install-agent-team.sh /tmp/agent-team-bf-state --brownfield
+          grep -q keep-me /tmp/agent-team-bf-state/docs/agent-team/STATE.md
+          grep -q KEEP_HANDOFF /tmp/agent-team-bf-state/docs/agent-team/HANDOFF.md

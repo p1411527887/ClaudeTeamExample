@@ -2,10 +2,11 @@
 # Install agent-team skeleton into a project from this packaging repository.
 #
 # Usage (run from packaging repo root OR any cwd — script finds itself):
-#   ./scripts/install-agent-team.sh /path/to/project              # auto: greenfield if empty-ish
-#   ./scripts/install-agent-team.sh /path/to/project --greenfield # full rsync (overwrites collisions)
-#   ./scripts/install-agent-team.sh /path/to/project --brownfield # selective; never overwrites CLAUDE.md
+#   ./scripts/install-agent-team.sh /path/to/project              # auto: empty→greenfield, else brownfield
+#   ./scripts/install-agent-team.sh /path/to/project --greenfield # full rsync; refuses non-empty unless --force
+#   ./scripts/install-agent-team.sh /path/to/project --brownfield # selective; never overwrites CLAUDE.md / active STATE|HANDOFF
 #   ./scripts/install-agent-team.sh /path/to/project --dry-run
+#   ./scripts/install-agent-team.sh /path/to/project --greenfield --force  # allow greenfield into non-empty dest
 #
 set -euo pipefail
 
@@ -15,10 +16,11 @@ SRC="${PACKAGING_ROOT}/templates/agent-team"
 
 MODE="auto"   # auto | greenfield | brownfield
 DRY_RUN=0
+FORCE=0
 DEST=""
 
 usage() {
-  sed -n '2,12p' "$0" | sed 's/^# //; s/^#//'
+  sed -n '2,14p' "$0" | sed 's/^# //; s/^#//'
   exit 1
 }
 
@@ -27,6 +29,7 @@ while [[ $# -gt 0 ]]; do
     --greenfield) MODE="greenfield"; shift ;;
     --brownfield) MODE="brownfield"; shift ;;
     --dry-run) DRY_RUN=1; shift ;;
+    --force) FORCE=1; shift ;;
     -h|--help) usage ;;
     -*)
       echo "unknown flag: $1" >&2
@@ -50,8 +53,22 @@ done
 mkdir -p "${DEST}"
 DEST="$(cd "${DEST}" && pwd)"
 
+# True if DEST has any entry other than . / ..
+dest_nonempty() {
+  local f
+  shopt -s nullglob dotglob
+  for f in "${DEST}"/* "${DEST}"/.*; do
+    base="$(basename "${f}")"
+    [[ "${base}" == "." || "${base}" == ".." ]] && continue
+    shopt -u nullglob dotglob
+    return 0
+  done
+  shopt -u nullglob dotglob
+  return 1
+}
+
 if [[ "${MODE}" == "auto" ]]; then
-  if [[ -f "${DEST}/CLAUDE.md" || -f "${DEST}/AGENTS.md" || -d "${DEST}/src" || -d "${DEST}/.git" ]]; then
+  if dest_nonempty; then
     MODE="brownfield"
   else
     MODE="greenfield"
@@ -72,6 +89,11 @@ echo "install-agent-team: DEST=${DEST}"
 echo "install-agent-team: MODE=${MODE}"
 
 if [[ "${MODE}" == "greenfield" ]]; then
+  if dest_nonempty && [[ "${FORCE}" -ne 1 ]]; then
+    echo "error: greenfield destination is not empty: ${DEST}" >&2
+    echo "hint: use --brownfield (safe upgrade), or --greenfield --force to overwrite colliding paths" >&2
+    exit 1
+  fi
   if [[ "${DRY_RUN}" -eq 1 ]]; then
     rsync -a --dry-run "${SRC}/" "${DEST}/"
   else
@@ -85,19 +107,48 @@ if [[ "${MODE}" == "greenfield" ]]; then
   exit 0
 fi
 
-# --- brownfield: selective, never clobber CLAUDE.md ---
+# --- brownfield: selective, never clobber CLAUDE.md; preserve active STATE/HANDOFF ---
 run mkdir -p "${DEST}/docs" "${DEST}/scripts"
 
+# Usage: copy_tree FROM TO [extra rsync args...]
 copy_tree() {
   local from="$1" to="$2"
+  shift 2
   if [[ "${DRY_RUN}" -eq 1 ]]; then
-    rsync -a --dry-run "${from}" "${to}"
+    if [[ "$#" -gt 0 ]]; then
+      rsync -a --dry-run "$@" "${from}" "${to}"
+    else
+      rsync -a --dry-run "${from}" "${to}"
+    fi
   else
-    rsync -a "${from}" "${to}"
+    if [[ "$#" -gt 0 ]]; then
+      rsync -a "$@" "${from}" "${to}"
+    else
+      rsync -a "${from}" "${to}"
+    fi
   fi
 }
 
-copy_tree "${SRC}/docs/agent-team/" "${DEST}/docs/agent-team/"
+# Preserve live orchestration state files on upgrade
+copy_tree "${SRC}/docs/agent-team/" "${DEST}/docs/agent-team/" \
+  --exclude 'STATE.md' \
+  --exclude 'HANDOFF.md'
+
+# Seed STATE/HANDOFF only if missing (first brownfield install)
+for seed in STATE.md HANDOFF.md; do
+  if [[ ! -e "${DEST}/docs/agent-team/${seed}" ]]; then
+    if [[ "${DRY_RUN}" -eq 1 ]]; then
+      echo "dry-run: would seed docs/agent-team/${seed}"
+    else
+      mkdir -p "${DEST}/docs/agent-team"
+      cp "${SRC}/docs/agent-team/${seed}" "${DEST}/docs/agent-team/${seed}"
+      echo "seeded: docs/agent-team/${seed}"
+    fi
+  else
+    echo "preserve: docs/agent-team/${seed}"
+  fi
+done
+
 copy_tree "${SRC}/docs/specs/" "${DEST}/docs/specs/"
 copy_tree "${SRC}/docs/plans/" "${DEST}/docs/plans/"
 copy_tree "${SRC}/docs/reviews/" "${DEST}/docs/reviews/"
@@ -109,6 +160,10 @@ for f in AGENTS.md GROK.md .mcp.json.example; do
       echo "warn: existing AGENTS.md kept — merge role/SSOT tables from templates/agent-team/AGENTS.md by hand" >&2
       cp "${SRC}/AGENTS.md" "${DEST}/AGENTS.agent-team.md"
       echo "wrote: AGENTS.agent-team.md (sidecar for merge)"
+    fi
+    if [[ "${f}" == "GROK.md" ]]; then
+      cp "${SRC}/GROK.md" "${DEST}/GROK.agent-team.md"
+      echo "wrote: GROK.agent-team.md (sidecar for merge)"
     fi
   elif [[ "${DRY_RUN}" -eq 1 ]]; then
     echo "dry-run: would copy ${f} (if missing)"
@@ -130,17 +185,32 @@ for f in invoke-grok.sh verify-skeleton.sh test-guards.sh grok-wrapper.example.s
   fi
 done
 
-# VERSION + CHANGELOG (always refresh on brownfield — non-destructive docs)
+# VERSION + CHANGELOG: do not clobber app identity files — sidecar if present
 for f in VERSION CHANGELOG.md; do
   if [[ "${DRY_RUN}" -eq 1 ]]; then
-    echo "dry-run: would copy ${f}"
+    if [[ -e "${DEST}/${f}" ]]; then
+      echo "dry-run: would write ${f}.agent-team (keep existing ${f})"
+    else
+      echo "dry-run: would copy ${f}"
+    fi
   else
-    cp "${SRC}/${f}" "${DEST}/${f}"
-    echo "copied: ${f}"
+    if [[ -e "${DEST}/${f}" ]]; then
+      # Always refresh sidecar with template identity
+      if [[ "${f}" == "VERSION" ]]; then
+        cp "${SRC}/${f}" "${DEST}/VERSION.agent-team"
+        echo "wrote: VERSION.agent-team (existing VERSION preserved)"
+      else
+        cp "${SRC}/${f}" "${DEST}/CHANGELOG.agent-team.md"
+        echo "wrote: CHANGELOG.agent-team.md (existing CHANGELOG.md preserved)"
+      fi
+    else
+      cp "${SRC}/${f}" "${DEST}/${f}"
+      echo "copied: ${f}"
+    fi
   fi
 done
 
-# CLAUDE.md: never overwrite; write sidecar if missing orchestrator file
+# CLAUDE.md: never overwrite; write sidecar if existing
 if [[ -f "${DEST}/CLAUDE.md" ]]; then
   if [[ "${DRY_RUN}" -eq 1 ]]; then
     echo "dry-run: would write CLAUDE.agent-team.md sidecar (keep existing CLAUDE.md)"
@@ -160,3 +230,4 @@ fi
 
 echo "install-agent-team: brownfield done"
 echo "next: merge CLAUDE if needed; cd ${DEST} && ./scripts/verify-skeleton.sh"
+echo "note: docs/agent-team/STATE.md and HANDOFF.md were preserved if already present"

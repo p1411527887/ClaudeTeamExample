@@ -1,51 +1,56 @@
-# Agent Team Template
+# Template Agent Team
 
-**Version:** see [`VERSION`](../../VERSION) · **Changelog:** [`CHANGELOG.md`](../../CHANGELOG.md)
+**Phiên bản:** xem [`VERSION`](../../VERSION) · **Changelog:** [`CHANGELOG.md`](../../CHANGELOG.md)
 
-Disk-based multi-agent workflow: **Claude orchestrates**, **Grok codes** via CLI, shared SSOT (spec / plan / reviews / HANDOFF / STATE).
+Workflow multi-agent trên disk: **Claude điều phối**, **Grok code** qua CLI, SSOT (spec / plan / reviews / HANDOFF / STATE).
 
-> **CLAUDE.md identity**  
-> - *Packaging repo* root `CLAUDE.md` = Karpathy-only (this docs project).  
-> - *After install into a consumer project*, `CLAUDE.md` = orchestrator contract from this template (Karpathy + agent-team duties).
+> **Vai trò CLAUDE.md**  
+> - *Repo packaging* root `CLAUDE.md` = chỉ Karpathy.  
+> - *Sau khi cài vào app*, `CLAUDE.md` = contract orchestrator (Karpathy + agent-team).
+
+**Hướng dẫn xài chi tiết:** [USAGE.md](./USAGE.md)
 
 ---
 
-## Where am I?
+## Bạn đang ở đâu?
 
-| You are… | What to do |
-|----------|------------|
-| In the **packaging repo** (directory `templates/agent-team/` exists at repo root) | Install with the command below from the **packaging repo root** (not from this file’s folder). |
-| Already **inside a consumer project** (this file is at `docs/agent-team/README.md`) | Skeleton is installed. Use [Daily loop](#daily-loop-short). Do **not** re-run packaging install paths. |
+| Bạn ở… | Làm gì |
+|--------|--------|
+| **Repo packaging** (có thư mục `templates/agent-team/` ở root) | Cài bằng lệnh bên dưới, chạy từ **root packaging**. |
+| **Project app** (file này là `docs/agent-team/README.md`) | Skeleton đã cài. Đọc [USAGE.md](./USAGE.md), rồi [Vòng lặp hàng ngày](#vòng-lặp-hàng-ngày-ngắn). **Không** chạy lại lệnh install packaging. |
 
-**Packaging-only command** (run from packaging repo root — path is text, not a relative markdown link, so it stays valid after copy):
+Lệnh chỉ dùng ở packaging (path dạng text, không phải link markdown tương đối — vẫn đúng sau khi copy):
 
 ```bash
 ./scripts/install-agent-team.sh /path/to/your-project
 ```
 
-Paths like `templates/agent-team/...` only work from the packaging repository root.
+Path kiểu `templates/agent-team/...` chỉ có nghĩa từ root packaging.
 
 ---
 
-## Install from packaging repository (recommended)
+## Cài từ repo packaging (khuyên dùng)
 
-From the **packaging repo root**:
+Từ **root packaging**:
 
 ```bash
-# auto-detect greenfield vs brownfield
+# auto: thư mục trống → greenfield; đã có file → brownfield
 ./scripts/install-agent-team.sh /path/to/your-project
 
-# force full copy (overwrites collisions — empty projects only)
+# full copy — từ chối dest không trống trừ --force
 ./scripts/install-agent-team.sh /path/to/your-project --greenfield
+./scripts/install-agent-team.sh /path/to/your-project --greenfield --force
 
-# existing project: selective copy, never overwrites CLAUDE.md
+# project có sẵn: copy chọn lọc; không đè CLAUDE.md, STATE.md, HANDOFF.md
 ./scripts/install-agent-team.sh /path/to/your-project --brownfield
 
-# preview
+# xem trước
 ./scripts/install-agent-team.sh /path/to/your-project --brownfield --dry-run
 ```
 
-Then:
+**An toàn brownfield:** refresh script/docs template nhưng **giữ** `STATE.md` / `HANDOFF.md`. Nếu app đã có `VERSION` / `CHANGELOG.md` → sidecar `VERSION.agent-team` / `CHANGELOG.agent-team.md`.
+
+Rồi:
 
 ```bash
 cd /path/to/your-project
@@ -53,7 +58,7 @@ cd /path/to/your-project
 ./scripts/test-guards.sh
 ```
 
-### Manual greenfield (packaging repo only)
+### Greenfield thủ công (chỉ packaging)
 
 ```bash
 rsync -a --dry-run templates/agent-team/ /path/to/your-project/
@@ -61,82 +66,89 @@ rsync -a templates/agent-team/ /path/to/your-project/
 chmod +x /path/to/your-project/scripts/*.sh
 ```
 
-### Manual brownfield (packaging repo only)
+### Brownfield thủ công (chỉ packaging)
 
-**Do not** blind full-tree rsync over an existing `CLAUDE.md` / `docs/`.
+**Đừng** rsync full đè `CLAUDE.md` / `docs/` hiện có.
 
-Prefer:
+Khuyên:
 
 ```bash
 ./scripts/install-agent-team.sh /path/to/your-project --brownfield
 ```
 
-If you must copy by hand: rsync only `docs/agent-team/`, `docs/specs|plans|reviews/`, `AGENTS.md`, `GROK.md`, `scripts/*`; **merge** CLAUDE (or keep `CLAUDE.agent-team.md` sidecar from the installer). If `AGENTS.md` already exists, merge role/SSOT tables manually (installer skips overwrite).
+Copy tay: chỉ `docs/agent-team/`, `docs/specs|plans|reviews/`, `AGENTS.md`, `GROK.md`, `scripts/*`; **merge** CLAUDE (hoặc sidecar `CLAUDE.agent-team.md`). `AGENTS.md` đã có → merge bảng role/SSOT tay (installer không đè).
 
 ---
 
-## Daily loop (short)
+## Vòng lặp hàng ngày (ngắn)
 
-1. Claude/Opus: write spec → Sonnet review  
-2. Claude/Opus: write plan → Sonnet review  
-3. Claude: fill `docs/agent-team/HANDOFF.md` + `STATE.md` using the [pre-invoke checklist](./WORKFLOW.md#before-every-scriptsinvoke-groksh-checklist)  
-4. `./scripts/invoke-grok.sh`  
-5. Claude/Sonnet: code review → blocking findings → fix-only HANDOFF → step 4  
+**0. Size** — nói `micro` / `small` / `full` (hoặc để Claude đề xuất). Ghi vào `STATE.size`.
 
-Details: [WORKFLOW.md](./WORKFLOW.md).  
-Worked sample: [examples/demo-feature/](./examples/demo-feature/).  
-Optional ECC (Claude skill pack) while keeping this pipeline primary: [ECC-INTEGRATION.md](./ECC-INTEGRATION.md).
+| Size | Vòng |
+|------|------|
+| **micro** | HANDOFF mỏng → **Grok** (`invoke-grok`) → code review nhẹ (tuỳ). Claude **không** code. |
+| **small** | Spec ⟲ sạch → **bạn OK** → Grok → code review → (bug → **bạn OK** → Grok fix). Plan tuỳ chọn. |
+| **full** | Spec ⟲ → **bạn OK** → plan ⟲ → **bạn OK** → Grok → code review → (bug → **bạn OK** → Grok fix) |
+
+**Mọi size:** Grok là coder; Claude chỉ spec/plan/review/orchestrate.  
+**small/full:** Claude review-until-clean trước human; Grok fix cần `human_code_fix: approved`.
+
+Chi tiết: [WORKFLOW.md](./WORKFLOW.md) · [USAGE.md](./USAGE.md).  
+Mẫu file: [examples/demo-feature/](./examples/demo-feature/).  
+Pack tuỳ chọn: [SUPERPOWERS-INTEGRATION.md](./SUPERPOWERS-INTEGRATION.md) · [ECC-INTEGRATION.md](./ECC-INTEGRATION.md).
 
 ---
 
-## Grok CLI adapter
+## Adapter Grok CLI
 
 ```bash
-# default binary name
+# tên binary mặc định
 export GROK_CMD="grok"
 
-# multi-word command (word-split intentional):
+# lệnh nhiều từ (cố ý word-split):
 # export GROK_CMD="grok --print"
 # export GROK_CMD="grok -p"
 
 # absolute path
 # export GROK_CMD="/usr/local/bin/grok"
 
-# recommended for complex CLIs: copy and edit the example wrapper
+# CLI phức tạp: copy và sửa wrapper
 # cp scripts/grok-wrapper.example.sh scripts/grok-wrapper.sh
 # chmod +x scripts/grok-wrapper.sh
-# # edit REAL_GROK inside the wrapper
+# # sửa REAL_GROK trong wrapper
 # export GROK_CMD="$(pwd)/scripts/grok-wrapper.sh"
 
 ./scripts/invoke-grok.sh
-./scripts/invoke-grok.sh "optional extra instruction"
+./scripts/invoke-grok.sh "ghi chú thêm (tuỳ chọn)"
 ```
 
-See comments in [`scripts/grok-wrapper.example.sh`](../../scripts/grok-wrapper.example.sh).
+Xem comment trong [`scripts/grok-wrapper.example.sh`](../../scripts/grok-wrapper.example.sh).
 
-### Preflight (enforced by `invoke-grok.sh`)
+### Preflight (`invoke-grok.sh` bắt buộc)
 
-Refuses launch unless:
+Từ chối launch nếu thiếu:
 
-- HANDOFF `STATE phase` **and** STATE.md `phase` are both `CODE`
-- Feature slug + iteration match between STATE and HANDOFF
-- Iteration ≥ 1, slug not `null`
-- No idle sentinel text
-- `## Grok result` contains `pending` (clear stale pass/fail)
+- `STATE.size` là `micro` \| `small` \| `full`
+- HANDOFF + STATE đều phase `CODE`
+- Feature slug khớp; iteration khớp; iteration ≥ 1
+- **micro:** pre-code gates được `n/a`
+- **small/full:** `human_spec` + `spec_review` approved; plan gates theo size
+- Iter ≥ 2: `human_code_fix` approved
+- `## Grok result` body chỉ `pending` (reject pass/fail)
 
-If launch fails after preflight, fix `GROK_CMD` / CLI install — that is adapter config, not workflow design.
-
----
-
-## MCP (Context7-style)
-
-Merge the `mcpServers` entry from project-root `.mcp.json.example` into your real MCP config. Do not rename-and-run the example wholesale. Index MCP = lookup only; requirements stay in specs + HANDOFF.
+Preflight fail → sửa HANDOFF/STATE / chờ human. Preflight ok mà CLI fail → sửa `GROK_CMD` / cài Grok.
 
 ---
 
-## Verify & tests (after install)
+## MCP (kiểu Context7)
+
+Gộp entry `mcpServers` từ `.mcp.json.example` vào config MCP thật. Đừng rename-and-run nguyên file example. Index MCP = chỉ tra cứu; requirement chỉ trong spec + HANDOFF.
+
+---
+
+## Verify & test (sau cài)
 
 ```bash
-./scripts/verify-skeleton.sh   # required files + headings
-./scripts/test-guards.sh       # invoke-grok preflight unit tests
+./scripts/verify-skeleton.sh   # file bắt buộc + heading
+./scripts/test-guards.sh       # unit test preflight invoke-grok
 ```

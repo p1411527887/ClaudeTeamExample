@@ -12,13 +12,16 @@ REQUIRED=(
   "CLAUDE.md"
   "AGENTS.md"
   "GROK.md"
-  "VERSION"
-  "CHANGELOG.md"
+  # VERSION / CHANGELOG: root or brownfield sidecars (app may own root VERSION)
+  "VERSION_OR_SIDECAR"
+  "CHANGELOG_OR_SIDECAR"
   "docs/agent-team/README.md"
+  "docs/agent-team/USAGE.md"
   "docs/agent-team/WORKFLOW.md"
   "docs/agent-team/STATE.md"
   "docs/agent-team/HANDOFF.md"
   "docs/agent-team/ECC-INTEGRATION.md"
+  "docs/agent-team/SUPERPOWERS-INTEGRATION.md"
   "docs/agent-team/templates/SPEC.template.md"
   "docs/agent-team/templates/PLAN.template.md"
   "docs/agent-team/templates/SPEC_REVIEW.template.md"
@@ -37,6 +40,20 @@ REQUIRED=(
 
 missing=0
 for f in "${REQUIRED[@]}"; do
+  if [[ "${f}" == "VERSION_OR_SIDECAR" ]]; then
+    if [[ ! -e "VERSION" && ! -e "VERSION.agent-team" ]]; then
+      echo "MISSING: VERSION (or VERSION.agent-team sidecar)"
+      missing=1
+    fi
+    continue
+  fi
+  if [[ "${f}" == "CHANGELOG_OR_SIDECAR" ]]; then
+    if [[ ! -e "CHANGELOG.md" && ! -e "CHANGELOG.agent-team.md" ]]; then
+      echo "MISSING: CHANGELOG.md (or CHANGELOG.agent-team.md sidecar)"
+      missing=1
+    fi
+    continue
+  fi
   if [[ ! -e "${f}" ]]; then
     echo "MISSING: ${f}"
     missing=1
